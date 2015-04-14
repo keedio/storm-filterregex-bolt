@@ -35,6 +35,7 @@ public class testYammerMetrics {
 		Config conf = new Config();
 		conf.put("filter.bolt.allow", "\\d{3}"); // Aceptamos las cadenas con tres digitos seguidos
 		conf.put("filter.bolt.deny", "\\d{2}.{2}\\d"); // Rechazamos las cadenas que 
+		conf.put("metrics.reporter.yammer.facade..metric.bucket.seconds", 10);
 		bolt.prepare(conf, topologyContext);
 	}
 
