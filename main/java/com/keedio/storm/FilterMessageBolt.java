@@ -75,9 +75,6 @@ public class FilterMessageBolt implements IBasicBolt {
 	public void prepare(Map stormConf, TopologyContext context) {
 		allowMessages = (String) stormConf.get("filter.bolt.allow");
 		denyMessages = (String) stormConf.get("filter.bolt.deny");
-		
-		// Tiempo de notificacion de metricas en los diferentes bolts
-        stormConf.put(YammerFacadeMetric.FACADE_METRIC_TIME_BUCKET_IN_SEC, 10);
         
         yammerAdapter = StormYammerMetricsAdapter.configure(stormConf, context, new MetricsRegistry());
         accepted = yammerAdapter.createCounter("accepted", "");
@@ -106,7 +103,7 @@ public class FilterMessageBolt implements IBasicBolt {
 			Matcher matcherAllow = patternAllow.matcher(message);
 			if (matcherAllow.find()) {
 				LOG.debug("Emiting tuple(allowed): " + message.toString());
-				collector.emit(tuple(message));
+				collector.emit(tuple(message.getBytes()));
 				accepted.inc();
 			}else{
 				LOG.debug("NOT Emiting tuple(not allowed): " + message.toString());
@@ -119,7 +116,7 @@ public class FilterMessageBolt implements IBasicBolt {
 			Matcher matcherDeny = patternDeny.matcher(message);
 			if (!matcherDeny.find()) {
 				LOG.debug("Emiting tuple(not denied): " + message.toString());
-				collector.emit(tuple(message));
+				collector.emit(tuple(message.getBytes()));
 				accepted.inc();
 			}else {
 				rejected.inc();
@@ -128,7 +125,7 @@ public class FilterMessageBolt implements IBasicBolt {
 		}
 		else{
 			LOG.debug("Emiting tuple(no filter): " + message.toString());
-			collector.emit(tuple(message));
+			collector.emit(tuple(message.getBytes()));
 			accepted.inc();
 		}
 
