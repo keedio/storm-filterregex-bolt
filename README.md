@@ -1,4 +1,5 @@
-storm-filterregex-bolt
+#storm-filterregex-bolt
+Description
 ======================
 This bolt receives a byte array and search for regex patterns configured in propery file (see the [tcp topology](https://github.com/keedio/Storm-TCP-Topology)); if the message contains a whitelisted pattern then it's emitted to next bolt, other case the message is discarded. 
 
