@@ -1,5 +1,6 @@
 package com.keedio.storm.metrics;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -21,7 +22,7 @@ import com.keedio.storm.FilterMessageBolt;
 *Extends MonitoredCounterGroup class to allow the publication of JMX metrics 
 *following the mechanism established by Flume. 
 */
-public class MetricsController {
+public class MetricsController implements Serializable {
 
 	public static final Logger LOG = LoggerFactory
 			.getLogger(MetricsController.class);
@@ -29,13 +30,10 @@ public class MetricsController {
 		    Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]*(\\.([a-zA-Z0-9][a-zA-Z0-9-]*))*$");
 	
 	
-	private Meter meterEvents;
-	private Meter meterFiles;
-	private Histogram meanProcessTime;
-	private Histogram totalFileEvents;
-	private MetricRegistry metrics;	
-	private Map<String, Meter> meters;
-	private Histogram throughput;
+	// Ojo, problema de serializacion sin el transient
+	transient private MetricRegistry metrics;	
+	transient private Map<String, Meter> meters;
+	transient private Histogram throughput;
 	
 	public MetricRegistry getMetrics() {
 		return metrics;
@@ -44,10 +42,6 @@ public class MetricsController {
 	public MetricsController() {
 		
 		metrics = new MetricRegistry();
-		meterEvents = metrics.meter("events");
-		meterFiles = metrics.meter("files");
-		meanProcessTime = metrics.histogram("meanProcessTime");
-		totalFileEvents = metrics.histogram("totalFileEvents");
 		meters = new HashMap<String, Meter>();		
 		throughput = metrics.histogram("throughput");
 		
@@ -77,18 +71,6 @@ public class MetricsController {
 		case MetricsEvent.NEW_METRIC_METER:
 			Meter meter = metrics.meter(event.getStr());
 			meters.put(event.getStr(), meter);
-			break;
-		case MetricsEvent.NEW_FILE:
-			meterFiles.mark();
-			break;
-		case MetricsEvent.NEW_EVENT:
-			meterEvents.mark();
-			break;
-		case MetricsEvent.TOTAL_FILE_EVENTS:
-			totalFileEvents.update(event.getValue());
-			break;
-		case MetricsEvent.MEAN_FILE_PROCESS:
-			meanProcessTime.update(event.getValue());
 			break;
 		}
 	}

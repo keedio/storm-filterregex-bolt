@@ -21,6 +21,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.keedio.storm.metrics.MetricsController;
 import com.keedio.storm.metrics.MetricsEvent;
+import com.keedio.storm.metrics.SimpleMetric;
 
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
@@ -42,7 +43,7 @@ public class FilterMessageBolt implements IBasicBolt {
     private String groupSeparator;
     private Map<String, String> allPatterns;
 	
-	private MetricsController mc = new MetricsController();
+	private MetricsController mc;
  
 	
     public MetricsController getMc() {
@@ -68,18 +69,29 @@ public class FilterMessageBolt implements IBasicBolt {
 		//pattern = (String) stormConf.get("pattern");
 		groupSeparator = (String) stormConf.get("group.separator");
 		allPatterns = getPropKeys(stormConf, "conf");
+		mc = new MetricsController();
 		
 		//Inicializamos las metricas para los diferentes filtros
 		Iterator<String> keys = allPatterns.keySet().iterator();
 		while (keys.hasNext()) {
 			String key = keys.next();
 			mc.manage(new MetricsEvent(MetricsEvent.NEW_METRIC_METER, key));
+			
+			// Registramos la metrica para su publicacion
+			SimpleMetric metric = new SimpleMetric(mc.getMetrics(), key, SimpleMetric.TYPE_METER);
+			context.registerMetric(key, metric, 5);
 		}
 		
 		// Y añadimos las metricas de rejected, accepted y throuput
 		mc.manage(new MetricsEvent(MetricsEvent.NEW_METRIC_METER, "accepted"));
 		mc.manage(new MetricsEvent(MetricsEvent.NEW_METRIC_METER, "rejected"));
-        		
+		// Registramos la metrica para su publicacion
+		SimpleMetric accepted = new SimpleMetric(mc.getMetrics(), "accepted", SimpleMetric.TYPE_METER);
+		SimpleMetric rejected = new SimpleMetric(mc.getMetrics(), "rejected", SimpleMetric.TYPE_METER);
+		SimpleMetric histogram = new SimpleMetric(mc.getMetrics(), "histogram", SimpleMetric.TYPE_HISTOGRAM);
+		context.registerMetric("accepted", accepted, 5);
+		context.registerMetric("rejected", rejected, 5);
+		context.registerMetric("histogram", histogram, 5);
 	}
 
 	private Map<String, String> getPropKeys(Map stormConf, String pattern) {
