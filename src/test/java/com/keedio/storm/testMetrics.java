@@ -17,7 +17,7 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.tuple.Tuple;
 
-public class testYammerMetrics {
+public class testMetrics {
 
 	ServerSocket ss;
 	private FilterMessageBolt bolt;
@@ -33,9 +33,11 @@ public class testYammerMetrics {
 		ss = new ServerSocket(8888);
 		bolt = new FilterMessageBolt();
 		Config conf = new Config();
-		conf.put("filter.bolt.allow", "\\d{3}"); // Aceptamos las cadenas con tres digitos seguidos
-		conf.put("filter.bolt.deny", "\\d{2}.{2}\\d"); // Rechazamos las cadenas que 
+		conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
+		conf.put("filter.bolt.deny", "\\d{3}"); // Rechazamos las cadenas que 
 		conf.put("metrics.reporter.yammer.facade..metric.bucket.seconds", 10);
+		conf.put("conf.pattern1", "(<date>[^\\s]+)\\s+");
+		conf.put("group.separator", "|");
 		bolt.prepare(conf, topologyContext);
 	}
 
@@ -46,46 +48,54 @@ public class testYammerMetrics {
 	
 	@Test
 	public void testThroughput() throws InterruptedException {
+		String cad = "{\"extraData\":\"fsfsdf\",\"message\":\"Fake\"}";
+		
 		Tuple tuple = mock(Tuple.class);
-	    when(tuple.getBinary(anyInt())).thenReturn("Output fake".getBytes());
+	    when(tuple.getBinary(anyInt())).thenReturn(cad.getBytes());
 		bolt.execute(tuple, collector);
 		bolt.execute(tuple, collector);
 		bolt.execute(tuple, collector);
 		bolt.execute(tuple, collector);
 		bolt.execute(tuple, collector);
 		
-		Assert.assertTrue("Se han capturado cuatro observaciones", bolt.getThroughput().getSnapshot().getValues().length == 5);
-		Assert.assertTrue("La media esta por debajo de los 3 segundos", bolt.getThroughput().mean() < 1);
+		Assert.assertTrue("Se han capturado cuatro observaciones", bolt.getMc().getMetrics().histogram("throughput").getSnapshot().getValues().length == 5);
+		Assert.assertTrue("La media esta por debajo de los 3 segundos", bolt.getMc().getMetrics().histogram("throughput").getSnapshot().getMean() < 1);
 
 	}
 	
 	@Test
 	public void testAccepted() throws InterruptedException {
+		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"ww erwrw 22 fsfsdfsf\"}";		
+		
 		Tuple tuple = mock(Tuple.class);
-	    when(tuple.getBinary(anyInt())).thenReturn("ww erwrw 222 fsfsdfsf".getBytes());
+	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
 		bolt.execute(tuple, collector);
 		
-		Assert.assertTrue("Se acepta", bolt.getAccepted().count() == 1);
+		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("accepted").getCount() == 1);
 
 	}
 	
 	@Test
 	public void testRejected1() throws InterruptedException {
+		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"ww erwrw 222 fsfsdfsf\"}";		
+		
 		Tuple tuple = mock(Tuple.class);
-	    when(tuple.getBinary(anyInt())).thenReturn("ww erwrw 222 fsfsdfsf".getBytes());
+	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
 		bolt.execute(tuple, collector);
 		
-		Assert.assertTrue("Se rechazan", bolt.getRejected().count() == 0);
+		Assert.assertTrue("Se rechazan", bolt.getMc().getMetrics().meter("rejected").getCount() == 1);
 
 	}
 
 	@Test
 	public void testRejected2() throws InterruptedException {
+		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"ww erwrw (22xg3)nn fsfsdfsf\"}";		
+		
 		Tuple tuple = mock(Tuple.class);
-	    when(tuple.getBinary(anyInt())).thenReturn("ww erwrw (22xg3)nn fsfsdfsf".getBytes());
+	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
 		bolt.execute(tuple, collector);
 		
-		Assert.assertTrue("Se rechazan", bolt.getRejected().count() == 1);
+		Assert.assertTrue("Se rechazan", bolt.getMc().getMetrics().meter("rejected").getCount() == 0);
 
 	}
 

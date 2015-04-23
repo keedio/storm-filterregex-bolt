@@ -43,11 +43,10 @@ public class FilterBoltTest {
 
 	@After
 	public void finish() throws IOException {
-		ss.close();
 	}
 	
 	@Test
-	public void testAccepted() throws InterruptedException {
+	public void testFilteredMessage() throws InterruptedException {
 		Tuple tuple = mock(Tuple.class);
 		
 		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"hola amigo <date>11-23-24  <time>22:22:22 sflhsldfjs\"}";
@@ -55,9 +54,21 @@ public class FilterBoltTest {
 	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
 		bolt.execute(tuple, collector);
 		
-		Assert.assertTrue("Se acepta", bolt.getAccepted().count() == 1);
+		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("pattern1").getCount() == 1);
 
 	}
 	
+	@Test
+	public void testUnfilteredMessage() throws InterruptedException {
+		Tuple tuple = mock(Tuple.class);
+		
+		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"hola amigo date>11-23-24  <time>22:22:22 sflhsldfjs\"}";
+		
+	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
+		bolt.execute(tuple, collector);
+		
+		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("pattern1").getCount() == 0);
+
+	}
 
 }

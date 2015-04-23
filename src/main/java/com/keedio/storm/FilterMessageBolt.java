@@ -1,26 +1,26 @@
 package com.keedio.storm;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.staslev.storm.metrics.yammer.StormYammerMetricsAdapter;
-import com.github.staslev.storm.metrics.yammer.YammerFacadeMetric;
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Histogram;
-import com.yammer.metrics.core.MetricsRegistry;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.keedio.storm.metrics.MetricsController;
+import com.keedio.storm.metrics.MetricsEvent;
 
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
@@ -34,40 +34,19 @@ public class FilterMessageBolt implements IBasicBolt {
 
 	public static final Logger LOG = LoggerFactory
 			.getLogger(FilterMessageBolt.class);
+	private static final Pattern hostnamePattern =
+		    Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]*(\\.([a-zA-Z0-9][a-zA-Z0-9-]*))*$");
 
 	String allowMessages, denyMessages;
     private Date lastExecution = new Date();
-    // Declaramos el adaptador y las metricas de yammer
-    private StormYammerMetricsAdapter yammerAdapter;
-	private Counter rejected;
-	private Counter accepted;
-    private Histogram throughput;   
     private String groupSeparator;
-    //private String pattern;
     private Map<String, String> allPatterns;
-    
-	public Counter getRejected() {
-		return rejected;
-	}
-
-	public void setRejected(Counter rejected) {
-		this.rejected = rejected;
-	}
-
-	public Counter getAccepted() {
-		return accepted;
-	}
-
-	public void setAccepted(Counter accepted) {
-		this.accepted = accepted;
-	}
-
-	public Histogram getThroughput() {
-		return throughput;
-	}
-
-	public void setThroughput(Histogram throughput) {
-		this.throughput = throughput;
+	
+	private MetricsController mc = new MetricsController();
+ 
+	
+    public MetricsController getMc() {
+		return mc;
 	}
 
 	@Override
@@ -89,12 +68,18 @@ public class FilterMessageBolt implements IBasicBolt {
 		//pattern = (String) stormConf.get("pattern");
 		groupSeparator = (String) stormConf.get("group.separator");
 		allPatterns = getPropKeys(stormConf, "conf");
-        
-        yammerAdapter = StormYammerMetricsAdapter.configure(stormConf, context, new MetricsRegistry());
-        accepted = yammerAdapter.createCounter("accepted", "");
-        rejected = yammerAdapter.createCounter("rejected", "");
-        throughput = yammerAdapter.createHistogram("throughput", "", false);
 		
+		//Inicializamos las metricas para los diferentes filtros
+		Iterator<String> keys = allPatterns.keySet().iterator();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			mc.manage(new MetricsEvent(MetricsEvent.NEW_METRIC_METER, key));
+		}
+		
+		// Y añadimos las metricas de rejected, accepted y throuput
+		mc.manage(new MetricsEvent(MetricsEvent.NEW_METRIC_METER, "accepted"));
+		mc.manage(new MetricsEvent(MetricsEvent.NEW_METRIC_METER, "rejected"));
+        		
 	}
 
 	private Map<String, String> getPropKeys(Map stormConf, String pattern) {
@@ -128,7 +113,7 @@ public class FilterMessageBolt implements IBasicBolt {
         lastExecution = actualDate;
         
         // Registramos para calculo de throughput
-        throughput.update(aux);
+        mc.manage(new MetricsEvent(MetricsEvent.UPDATE_THROUGHPUT, aux));
 		
 		String message = new String(input.getBinary(0));
 		
@@ -141,14 +126,14 @@ public class FilterMessageBolt implements IBasicBolt {
 					String nextMessage = filterMessage(message);
 					System.out.println(nextMessage);
 					collector.emit(tuple(nextMessage.getBytes()));
-					accepted.inc();
+					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 				} catch (ParseException e) {
 					LOG.error("error al realizar el filtrado de datos", e);
-					rejected.inc();
+					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 				}
 			}else{
 				LOG.debug("NOT Emiting tuple(not allowed): " + message.toString());
-				rejected.inc();
+				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 			}
 			
 		}
@@ -161,13 +146,13 @@ public class FilterMessageBolt implements IBasicBolt {
 					String nextMessage = filterMessage(message);
 					System.out.println(nextMessage);
 					collector.emit(tuple(nextMessage.getBytes()));
-					accepted.inc();
+					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 				} catch (ParseException e) {
 					LOG.error("error al realizar el filtrado de datos", e);
-					rejected.inc();
+					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 				}
 			}else {
-				rejected.inc();
+				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 				LOG.debug("NOT Emiting tuple(denied): " + message.toString());
 			}
 		}
@@ -177,10 +162,10 @@ public class FilterMessageBolt implements IBasicBolt {
 				String nextMessage = filterMessage(message);
 				System.out.println(nextMessage);
 				collector.emit(tuple(nextMessage.getBytes()));
-				accepted.inc();
+				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 			} catch (ParseException e) {
 				LOG.error("error al realizar el filtrado de datos", e);
-				rejected.inc();
+				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 			}
 		}
 
@@ -199,9 +184,8 @@ public class FilterMessageBolt implements IBasicBolt {
 		
 		while (it.hasNext()) {
 			String key = it.next();
-			String pattern = allPatterns.get(key);
 			
-			String all = getFilteredMessages(pattern, originalMessage);
+			String all = getFilteredMessages(key, originalMessage);
 			
 			buf.append(all).append(groupSeparator);
 		}
@@ -211,14 +195,18 @@ public class FilterMessageBolt implements IBasicBolt {
 		return obj.toJSONString();
 	}
 
-	private String getFilteredMessages(String pattern, String message) throws ParseException {
+	private String getFilteredMessages(String key, String message) throws ParseException {
 
+		String pattern = allPatterns.get(key);
 		Pattern p = Pattern.compile(pattern);
 		Matcher m = p.matcher(message);
 		
 		StringBuffer buf = new StringBuffer();
 		if (m.find()) {
 			int count = m.groupCount();
+			
+			// Añadimos mensaje a la metrica
+			mc.manage(new MetricsEvent(MetricsEvent.INC_METER, key));
 			
 			for (int i=1;i<=count;i++) {
 				buf.append(m.group(i));
@@ -236,5 +224,38 @@ public class FilterMessageBolt implements IBasicBolt {
 		// TODO Auto-generated method stub
 
 	}
+	
+	private String metricsPath() {
+		final String myHostname = extractHostnameFromFQHN(detectHostname());
+		return myHostname;
+	}
+
+	private static String detectHostname() {
+		String hostname = "hostname-could-not-be-detected";
+		try {
+			hostname = InetAddress.getLocalHost().getHostName();
+		}
+		catch (UnknownHostException e) {
+			LOG.error("Could not determine hostname");
+		}
+		return hostname;
+	}
+
+	private static String extractHostnameFromFQHN(String fqhn) {
+		if (hostnamePattern.matcher(fqhn).matches()) {
+			if (fqhn.contains(".")) {
+				return fqhn.split("\\.")[0];
+			}
+			else {
+				return fqhn;
+			}
+		}
+		else {
+			// We want to return the input as-is
+			// when it is not a valid hostname/FQHN.
+			return fqhn;
+		}
+	}
+	
 
 }
