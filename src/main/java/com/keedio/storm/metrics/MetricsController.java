@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
+import org.apache.log4j.*;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Histogram;
@@ -24,16 +24,16 @@ import com.keedio.storm.FilterMessageBolt;
 */
 public class MetricsController implements Serializable {
 
-	public static final Logger LOG = LoggerFactory
+	public static final Logger LOG = Logger
 			.getLogger(MetricsController.class);
 	private static final Pattern hostnamePattern =
 		    Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]*(\\.([a-zA-Z0-9][a-zA-Z0-9-]*))*$");
 	
 	
 	// Ojo, problema de serializacion sin el transient
-	transient private MetricRegistry metrics;	
-	transient private Map<String, Meter> meters;
-	transient private Histogram throughput;
+	protected transient MetricRegistry metrics;	
+	protected transient Map<String, Meter> meters;
+	protected transient Histogram throughput;
 	
 	public MetricRegistry getMetrics() {
 		return metrics;

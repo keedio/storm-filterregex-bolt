@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
+import org.apache.log4j.*;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Histogram;
@@ -23,17 +23,19 @@ import com.keedio.storm.metrics.MetricsController;
 import com.keedio.storm.metrics.MetricsEvent;
 import com.keedio.storm.metrics.SimpleMetric;
 
+import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.IBasicBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import static backtype.storm.utils.Utils.tuple;
 
-public class FilterMessageBolt implements IBasicBolt {
+public class FilterMessageBolt extends BaseRichBolt {
 
-	public static final Logger LOG = LoggerFactory
+	public static final Logger LOG = Logger
 			.getLogger(FilterMessageBolt.class);
 	private static final Pattern hostnamePattern =
 		    Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]*(\\.([a-zA-Z0-9][a-zA-Z0-9-]*))*$");
@@ -42,6 +44,7 @@ public class FilterMessageBolt implements IBasicBolt {
     private Date lastExecution = new Date();
     private String groupSeparator;
     private Map<String, String> allPatterns;
+    private OutputCollector collector;
 	
 	private MetricsController mc;
  
@@ -63,12 +66,13 @@ public class FilterMessageBolt implements IBasicBolt {
 	}
 
 	@Override
-	public void prepare(Map stormConf, TopologyContext context) {
+	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		allowMessages = (String) stormConf.get("filter.bolt.allow");
 		denyMessages = (String) stormConf.get("filter.bolt.deny");
 		//pattern = (String) stormConf.get("pattern");
 		groupSeparator = (String) stormConf.get("group.separator");
 		allPatterns = getPropKeys(stormConf, "conf");
+		this.collector = collector;
 		mc = new MetricsController();
 		
 		//Inicializamos las metricas para los diferentes filtros
@@ -115,7 +119,7 @@ public class FilterMessageBolt implements IBasicBolt {
 	}
 
 	@Override
-	public void execute(Tuple input, BasicOutputCollector collector) {
+	public void execute(Tuple input) {
 		
 		LOG.debug("FilterMessage: execute");
 
@@ -138,9 +142,12 @@ public class FilterMessageBolt implements IBasicBolt {
 					String nextMessage = filterMessage(message);
 					System.out.println(nextMessage);
 					collector.emit(tuple(nextMessage.getBytes()));
+					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 				} catch (ParseException e) {
 					LOG.error("error al realizar el filtrado de datos", e);
+					collector.reportError(e);
+					collector.fail(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 				}
 			}else{
@@ -158,9 +165,12 @@ public class FilterMessageBolt implements IBasicBolt {
 					String nextMessage = filterMessage(message);
 					System.out.println(nextMessage);
 					collector.emit(tuple(nextMessage.getBytes()));
+					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 				} catch (ParseException e) {
 					LOG.error("error al realizar el filtrado de datos", e);
+					collector.reportError(e);
+					collector.fail(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 				}
 			}else {
@@ -174,9 +184,12 @@ public class FilterMessageBolt implements IBasicBolt {
 				String nextMessage = filterMessage(message);
 				System.out.println(nextMessage);
 				collector.emit(tuple(nextMessage.getBytes()));
+				collector.ack(input);
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 			} catch (ParseException e) {
 				LOG.error("error al realizar el filtrado de datos", e);
+				collector.reportError(e);
+				collector.fail(input);
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 			}
 		}

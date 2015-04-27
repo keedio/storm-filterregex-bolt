@@ -14,9 +14,9 @@ public class SimpleMetric implements IMetric{
 	public static final int TYPE_METER = 1;
 	public static final int TYPE_HISTOGRAM = 2;
 	
-	MetricRegistry metric;
-	String metricId;
-	int type;
+	private MetricRegistry metric;
+	private String metricId;
+	private int type;
 	
 	public SimpleMetric(MetricRegistry metric, String metricId, int type) {
 		// TODO Auto-generated constructor stub
