@@ -26,7 +26,7 @@ public class testMetrics {
 	private TopologyContext topologyContext = mock(TopologyContext.class);
 
 	@Mock
-	private BasicOutputCollector collector = mock(BasicOutputCollector.class);
+	private OutputCollector collector = mock(OutputCollector.class);
 
 	@Before
 	public void setUp() throws UnknownHostException, IOException {
@@ -38,7 +38,7 @@ public class testMetrics {
 		conf.put("metrics.reporter.yammer.facade..metric.bucket.seconds", 10);
 		conf.put("conf.pattern1", "(<date>[^\\s]+)\\s+");
 		conf.put("group.separator", "|");
-		bolt.prepare(conf, topologyContext);
+		bolt.prepare(conf, topologyContext, collector);
 	}
 
 	@After
@@ -52,11 +52,11 @@ public class testMetrics {
 		
 		Tuple tuple = mock(Tuple.class);
 	    when(tuple.getBinary(anyInt())).thenReturn(cad.getBytes());
-		bolt.execute(tuple, collector);
-		bolt.execute(tuple, collector);
-		bolt.execute(tuple, collector);
-		bolt.execute(tuple, collector);
-		bolt.execute(tuple, collector);
+		bolt.execute(tuple);
+		bolt.execute(tuple);
+		bolt.execute(tuple);
+		bolt.execute(tuple);
+		bolt.execute(tuple);
 		
 		Assert.assertTrue("Se han capturado cuatro observaciones", bolt.getMc().getMetrics().histogram("throughput").getSnapshot().getValues().length == 5);
 		Assert.assertTrue("La media esta por debajo de los 3 segundos", bolt.getMc().getMetrics().histogram("throughput").getSnapshot().getMean() < 1);
@@ -69,7 +69,7 @@ public class testMetrics {
 		
 		Tuple tuple = mock(Tuple.class);
 	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
-		bolt.execute(tuple, collector);
+		bolt.execute(tuple);
 		
 		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("accepted").getCount() == 1);
 
@@ -81,7 +81,7 @@ public class testMetrics {
 		
 		Tuple tuple = mock(Tuple.class);
 	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
-		bolt.execute(tuple, collector);
+		bolt.execute(tuple);
 		
 		Assert.assertTrue("Se rechazan", bolt.getMc().getMetrics().meter("rejected").getCount() == 1);
 
@@ -93,7 +93,7 @@ public class testMetrics {
 		
 		Tuple tuple = mock(Tuple.class);
 	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
-		bolt.execute(tuple, collector);
+		bolt.execute(tuple);
 		
 		Assert.assertTrue("Se rechazan", bolt.getMc().getMetrics().meter("rejected").getCount() == 0);
 

@@ -26,7 +26,7 @@ public class FilterBoltTest {
 	private TopologyContext topologyContext = mock(TopologyContext.class);
 
 	@Mock
-	private BasicOutputCollector collector = mock(BasicOutputCollector.class);
+	private OutputCollector collector = mock(OutputCollector.class);
 
 	@Before
 	public void setUp() throws UnknownHostException, IOException {
@@ -38,7 +38,7 @@ public class FilterBoltTest {
 		conf.put("conf.pattern1", "(<date>[^\\s]+)\\s+(<time>[^\\s]+)\\s+");
 		conf.put("conf.pattern2", "(<date>[^\\s]+)\\s+");
 		conf.put("group.separator", "|");
-		bolt.prepare(conf, topologyContext);
+		bolt.prepare(conf, topologyContext, collector);
 	}
 
 	@After
@@ -52,7 +52,7 @@ public class FilterBoltTest {
 		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"hola amigo <date>11-23-24  <time>22:22:22 sflhsldfjs\"}";
 		
 	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
-		bolt.execute(tuple, collector);
+		bolt.execute(tuple);
 		
 		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("pattern1").getCount() == 1);
 
@@ -65,7 +65,7 @@ public class FilterBoltTest {
 		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"hola amigo date>11-23-24  <time>22:22:22 sflhsldfjs\"}";
 		
 	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
-		bolt.execute(tuple, collector);
+		bolt.execute(tuple);
 		
 		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("pattern1").getCount() == 0);
 
