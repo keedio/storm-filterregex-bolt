@@ -1,4 +1,4 @@
-package com.keedio.storm;
+package com.keedio.storm.bolt;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -19,9 +19,9 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.keedio.storm.metrics.MetricsController;
-import com.keedio.storm.metrics.MetricsEvent;
-import com.keedio.storm.metrics.SimpleMetric;
+import com.keedio.storm.bolt.metrics.MetricsController;
+import com.keedio.storm.bolt.metrics.MetricsEvent;
+import com.keedio.storm.bolt.metrics.SimpleMetric;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;

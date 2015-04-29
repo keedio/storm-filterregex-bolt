@@ -1,4 +1,4 @@
-package com.keedio.storm.metrics;
+package com.keedio.storm.bolt.metrics;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -15,7 +15,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.UniformSnapshot;
-import com.keedio.storm.FilterMessageBolt;
+import com.keedio.storm.bolt.FilterMessageBolt;
 
 /**
 *This class represents the controller metrics to publish to the source. 
