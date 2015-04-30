@@ -24,7 +24,7 @@ group.separator=|
 |property|mandatory|description
 |--------|------------|-------------|
 |filter.bolt.deny|false|Regex indicating match pattern of blacklisted messages|
-|filter.bolt.allow|false|Regex indicating match pattern of blacklisted messages|
+|filter.bolt.allow|false|Regex indicating match pattern of whitelisted messages|
 |conf.pattern1|false|Regex indicating group of patterns looked for in the message|
 |conf.pattern2|false|Regex indicating group of patterns looked for in the message|
 |group.separator|false|String used to separate the differents patterns|
