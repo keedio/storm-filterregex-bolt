@@ -147,11 +147,12 @@ public class FilterMessageBolt extends BaseRichBolt {
 				} catch (ParseException e) {
 					LOG.error("error al realizar el filtrado de datos", e);
 					collector.reportError(e);
-					collector.fail(input);
+					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 				}
 			}else{
 				LOG.debug("NOT Emiting tuple(not allowed): " + message.toString());
+				collector.ack(input);
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 			}
 			
@@ -170,11 +171,12 @@ public class FilterMessageBolt extends BaseRichBolt {
 				} catch (ParseException e) {
 					LOG.error("error al realizar el filtrado de datos", e);
 					collector.reportError(e);
-					collector.fail(input);
+					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 				}
 			}else {
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
+				collector.ack(input);
 				LOG.debug("NOT Emiting tuple(denied): " + message.toString());
 			}
 		}
@@ -189,7 +191,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 			} catch (ParseException e) {
 				LOG.error("error al realizar el filtrado de datos", e);
 				collector.reportError(e);
-				collector.fail(input);
+				collector.ack(input);
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 			}
 		}
