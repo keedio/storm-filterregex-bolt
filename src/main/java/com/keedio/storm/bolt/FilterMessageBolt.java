@@ -280,7 +280,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 				j++;
 			}
 
-			return map.toString();
+			return JSONObject.toJSONString(map);
 		} else {
 			int i=0;
 			while (m.find()) {
@@ -299,7 +299,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 				i++;
 			}
 			
-			return map.toString();
+			return JSONObject.toJSONString(map);
 
 		}		
 				
