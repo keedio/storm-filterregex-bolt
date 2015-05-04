@@ -1,11 +1,23 @@
 package com.keedio.storm.bolt;
 
+import info.ganglia.gmetric4j.gmetric.GMetric;
+import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,6 +31,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ganglia.GangliaReporter;
 import com.keedio.storm.bolt.metrics.MetricsController;
 import com.keedio.storm.bolt.metrics.MetricsEvent;
 import com.keedio.storm.bolt.metrics.SimpleMetric;
@@ -45,7 +58,9 @@ public class FilterMessageBolt extends BaseRichBolt {
     private String groupSeparator;
     private Map<String, String> allPatterns;
     private OutputCollector collector;
-	
+    private String gangliaServer;
+    private int gangliaPort;
+    private int refreshTime;
 	private MetricsController mc;
  
 	
@@ -72,6 +87,10 @@ public class FilterMessageBolt extends BaseRichBolt {
 		//pattern = (String) stormConf.get("pattern");
 		groupSeparator = (String) stormConf.get("group.separator");
 		allPatterns = getPropKeys(stormConf, "conf");
+		gangliaServer = (String) stormConf.get("ganglia.server");
+		gangliaPort = Integer.parseInt((String) stormConf.get("ganglia.port")); 
+		refreshTime = Integer.parseInt((String) stormConf.get("refreshtime"));
+		
 		this.collector = collector;
 		mc = new MetricsController();
 		
@@ -83,7 +102,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 			
 			// Registramos la metrica para su publicacion
 			SimpleMetric metric = new SimpleMetric(mc.getMetrics(), key, SimpleMetric.TYPE_METER);
-			context.registerMetric(key, metric, 5);
+			context.registerMetric(key, metric, refreshTime);
 		}
 		
 		// Y añadimos las metricas de rejected, accepted y throuput
@@ -93,9 +112,21 @@ public class FilterMessageBolt extends BaseRichBolt {
 		SimpleMetric accepted = new SimpleMetric(mc.getMetrics(), "accepted", SimpleMetric.TYPE_METER);
 		SimpleMetric rejected = new SimpleMetric(mc.getMetrics(), "rejected", SimpleMetric.TYPE_METER);
 		SimpleMetric histogram = new SimpleMetric(mc.getMetrics(), "histogram", SimpleMetric.TYPE_HISTOGRAM);
-		context.registerMetric("accepted", accepted, 5);
-		context.registerMetric("rejected", rejected, 5);
-		context.registerMetric("histogram", histogram, 5);
+		context.registerMetric("accepted", accepted, refreshTime);
+		context.registerMetric("rejected", rejected, refreshTime);
+		context.registerMetric("histogram", histogram, refreshTime);
+		
+		// Lanzamos el reporter
+		try {
+			final GMetric ganglia = new GMetric(gangliaServer, gangliaPort, UDPAddressingMode.MULTICAST, 1);
+			final GangliaReporter reporter = GangliaReporter.forRegistry(mc.getMetrics())
+			                                                .convertRatesTo(TimeUnit.SECONDS)
+			                                                .convertDurationsTo(TimeUnit.MILLISECONDS)
+			                                                .build(ganglia);
+			reporter.start(1, TimeUnit.MINUTES);		
+		} catch (IOException e) {
+			LOG.debug("Could not find ganglia server.", e);
+		}
 	}
 
 	private Map<String, String> getPropKeys(Map stormConf, String pattern) {
@@ -144,7 +175,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 					collector.emit(tuple(nextMessage.getBytes()));
 					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
-				} catch (ParseException e) {
+				} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
 					LOG.error("error al realizar el filtrado de datos", e);
 					collector.reportError(e);
 					collector.ack(input);
@@ -168,7 +199,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 					collector.emit(tuple(nextMessage.getBytes()));
 					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
-				} catch (ParseException e) {
+				} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
 					LOG.error("error al realizar el filtrado de datos", e);
 					collector.reportError(e);
 					collector.ack(input);
@@ -188,7 +219,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 				collector.emit(tuple(nextMessage.getBytes()));
 				collector.ack(input);
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
-			} catch (ParseException e) {
+			} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
 				LOG.error("error al realizar el filtrado de datos", e);
 				collector.reportError(e);
 				collector.ack(input);
@@ -198,7 +229,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 
 	}
 
-	public String filterMessage(String message) throws ParseException {
+	public String filterMessage(String message) throws ParseException, InvocationTargetException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException {
 		
 		JSONParser parser = new JSONParser();  
 		
@@ -222,28 +253,56 @@ public class FilterMessageBolt extends BaseRichBolt {
 		return obj.toJSONString();
 	}
 
-	private String getFilteredMessages(String key, String message) throws ParseException {
-
+	private String getFilteredMessages(String key, String message) throws ParseException, InvocationTargetException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException {
+		
+		Map<String, Map<String, String>> map = new HashMap<>();
+		
 		String pattern = allPatterns.get(key);
 		Pattern p = Pattern.compile(pattern);
+		Map groups = getNamedGroups(p);
+		
 		Matcher m = p.matcher(message);
 		
-		StringBuffer buf = new StringBuffer();
-		if (m.find()) {
-			int count = m.groupCount();
-			
-			// Añadimos mensaje a la metrica
-			mc.manage(new MetricsEvent(MetricsEvent.INC_METER, key));
-			
-			for (int i=1;i<=count;i++) {
-				buf.append(m.group(i));
-				if (i != count)
-					buf.append(groupSeparator);
-			}
-		}
-		
+		if (groups.isEmpty()) {
+			int j = 0;
 
-		return buf.toString();
+			while (m.find()) {
+				int count = m.groupCount();
+				
+				// Añadimos mensaje a la metrica
+				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, key));
+				
+				for (int i=1;i<=count;i++) {
+					if (!map.containsKey("group" + j)) map.put("group" + j, new HashMap<String, String>());
+					map.get("group" + j).put("item" + i, m.group(i));
+				}
+				
+				j++;
+			}
+
+			return map.toString();
+		} else {
+			int i=0;
+			while (m.find()) {
+				Iterator<String> it = groups.keySet().iterator();
+				
+				// Añadimos mensaje a la metrica
+				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, key));
+
+				while (it.hasNext()) {
+					String k = it.next();
+					
+					if (!map.containsKey("group" + i)) map.put("group" + i, new HashMap<String, String>());
+					map.get("group" + i).put(k, m.group(k));
+				}
+				
+				i++;
+			}
+			
+			return map.toString();
+
+		}		
+				
 	}
 	
 	@Override
@@ -283,6 +342,25 @@ public class FilterMessageBolt extends BaseRichBolt {
 			return fqhn;
 		}
 	}
+	
+	private static Map<String, Integer> getNamedGroups(Pattern regex)
+			throws NoSuchMethodException, SecurityException,
+			IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException {
+
+		Method namedGroupsMethod = Pattern.class.getDeclaredMethod("namedGroups");
+		namedGroupsMethod.setAccessible(true);
+
+		Map<String, Integer> namedGroups = null;
+		namedGroups = (Map<String, Integer>) namedGroupsMethod.invoke(regex);
+
+		if (namedGroups == null) {
+			throw new InternalError();
+		}
+
+		return Collections.unmodifiableMap(namedGroups);
+	}
+
 	
 
 }
