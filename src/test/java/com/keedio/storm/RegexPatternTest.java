@@ -1,5 +1,9 @@
 package com.keedio.storm;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,26 +76,43 @@ public class RegexPatternTest {
 	}
 
 	@Test
-	public void findGrupoPattern() {
+	public void findGrupoPattern() throws Exception{
+		//TODO--> revisar el test
+		String pattern = "(?<date>[0,1,2,3]\\d-[0,1]\\d-\\d\\d\\d\\d)\\s+(?<time>[0,1,2]\\d:\\d\\d)\\s+(?<time2>[0,1,2]\\d:\\d\\d)\\s+";
+		String toFind = "12-10-2015 25:15 gjslkgjs gklg jsdlkgsdfgsd 12-11-2015 22:22 fsdofsfjsl";
+		int encontradas = 0;
 		
-		String pattern = "(<date>[^\\s]+)\\s+(<time>[^\\s]+)\\s+";
-		String toFind = "hola amigo <date>11-23-24  <time>22:22:22 sflhsldfjs";
 		
 		Pattern patron = Pattern.compile(pattern);
+		Map aux = getNamedGroups(patron);
 		Matcher match = patron.matcher(toFind);
-
-		int encontradas = 0;
-		if (match.find()) {
-			int count = match.groupCount();
-			for (int i=1;i<=count;i++) {
-				System.out.println(match.group(i));
-				encontradas++;
-			}
+		while (match.find()) {
+			System.out.println(match.group("date"));
+			System.out.println(match.group("time"));
+			encontradas++;
 		}
 		
-		Assert.assertTrue("Encontramos dos fechas", 2==encontradas);
+		Assert.assertTrue("Encontramos dos fechas", true);
 		
 
+	}
+
+	private static Map<String, Integer> getNamedGroups(Pattern regex)
+			throws NoSuchMethodException, SecurityException,
+			IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException {
+
+		Method namedGroupsMethod = Pattern.class.getDeclaredMethod("namedGroups");
+		namedGroupsMethod.setAccessible(true);
+
+		Map<String, Integer> namedGroups = null;
+		namedGroups = (Map<String, Integer>) namedGroupsMethod.invoke(regex);
+
+		if (namedGroups == null) {
+			throw new InternalError();
+		}
+
+		return Collections.unmodifiableMap(namedGroups);
 	}
 
 }

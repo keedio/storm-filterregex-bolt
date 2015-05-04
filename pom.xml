@@ -10,11 +10,13 @@
 			<groupId>org.apache.storm</groupId>
 			<artifactId>storm-core</artifactId>
 			<version>0.9.2-incubating</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.storm</groupId>
 			<artifactId>storm-kafka</artifactId>
 			<version>0.9.2-incubating</version>
+			<scope>provided</scope>
 		</dependency>
     <dependency>
         <groupId>io.dropwizard.metrics</groupId>
@@ -37,10 +39,36 @@
 			<groupId>com.googlecode.json-simple</groupId>
 			<artifactId>json-simple</artifactId>
 			<version>1.1</version>
-		</dependency>		
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+  			<groupId>com.github.tony19</groupId>
+  			<artifactId>named-regexp</artifactId>
+  			<version>0.2.3</version>
+			<scope>provided</scope>
+		</dependency>				
 	</dependencies>
 	<build>
 		<plugins>
+		
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.3</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <minimizeJar>true</minimizeJar>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>		
+		
+		
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
