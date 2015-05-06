@@ -5,13 +5,13 @@ This bolt receives a byte array and search for regex patterns configured in prop
 If configured, you can get the patterns group indicated.
 
 
-## Property file configuration
 ```
 ...
 # OPTIONAL PROPERTIES
 
 # Filter messages rules, regexp expression are used
 # If allow is setted only the messages matching the regexp will be sent to host:port configured via TCP
+<<<<<<< HEAD
 filter.bolt.allow=.*||22.9.43.17.*
 # If deny is setted the messages matching the regexp will be discarded
 filter.bolt.deny=
@@ -33,9 +33,17 @@ group.separator=|
 See [test classes](https://github.com/keedio/storm-filterregex-bolt/blob/feature/horizfilter/src/test/java/com/keedio/storm/FilterBoltTest.java) for more information
 
 ## Compilation
+=======
+#filter.bolt.allow=.*||22.9.43.17.*
+# If deny is setted the messages matching the regexp will be discarded
+#filter.bolt.deny=
+...
+```
+
+Compilation
+===========
+>>>>>>> 11593a1d9113cf14fc3df229f3d950fd1bd94927
 Use maven
 ````
 mvn clean package
 ```
-
-
