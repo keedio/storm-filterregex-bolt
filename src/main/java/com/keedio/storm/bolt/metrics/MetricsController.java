@@ -15,7 +15,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.UniformSnapshot;
-import com.keedio.storm.bolt.FilterMessageBolt;
+import com.keedio.storm.bolt.filter.FilterMessageBolt;
 
 /**
 *This class represents the controller metrics to publish to the source. 

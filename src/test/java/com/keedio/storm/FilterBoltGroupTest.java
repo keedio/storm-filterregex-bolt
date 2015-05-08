@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import com.keedio.storm.bolt.FilterMessageBolt;
+import com.keedio.storm.bolt.filter.FilterMessageBolt;
 
 import static org.mockito.Mockito.*;
 import backtype.storm.Config;

@@ -1,4 +1,4 @@
-package com.keedio.storm.bolt;
+package com.keedio.storm.bolt.filter;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
@@ -116,17 +116,6 @@ public class FilterMessageBolt extends BaseRichBolt {
 		context.registerMetric("rejected", rejected, refreshTime);
 		context.registerMetric("histogram", histogram, refreshTime);
 		
-		// Lanzamos el reporter
-		try {
-			final GMetric ganglia = new GMetric(gangliaServer, gangliaPort, UDPAddressingMode.MULTICAST, 1);
-			final GangliaReporter reporter = GangliaReporter.forRegistry(mc.getMetrics())
-			                                                .convertRatesTo(TimeUnit.SECONDS)
-			                                                .convertDurationsTo(TimeUnit.MILLISECONDS)
-			                                                .build(ganglia);
-			reporter.start(1, TimeUnit.MINUTES);		
-		} catch (IOException e) {
-			LOG.debug("Could not find ganglia server.", e);
-		}
 	}
 
 	private Map<String, String> getPropKeys(Map stormConf, String pattern) {
@@ -172,7 +161,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 				try {
 					String nextMessage = filterMessage(message);
 					System.out.println(nextMessage);
-					collector.emit(tuple(nextMessage.getBytes()));
+					collector.emit(tuple(nextMessage));
 					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 				} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
@@ -196,7 +185,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 				try {
 					String nextMessage = filterMessage(message);
 					System.out.println(nextMessage);
-					collector.emit(tuple(nextMessage.getBytes()));
+					collector.emit(tuple(nextMessage));
 					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 				} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
@@ -216,7 +205,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 			try {
 				String nextMessage = filterMessage(message);
 				System.out.println(nextMessage);
-				collector.emit(tuple(nextMessage.getBytes()));
+				collector.emit(tuple(nextMessage));
 				collector.ack(input);
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 			} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
