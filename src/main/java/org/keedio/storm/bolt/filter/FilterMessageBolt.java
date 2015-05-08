@@ -72,9 +72,6 @@ public class FilterMessageBolt extends BaseRichBolt {
 		//pattern = (String) stormConf.get("pattern");
 		groupSeparator = (String) stormConf.get("group.separator");
 		allPatterns = getPropKeys(stormConf, "conf");
-		gangliaServer = (String) stormConf.get("ganglia.server");
-		gangliaPort = Integer.parseInt((String) stormConf.get("ganglia.port")); 
-		refreshTime = Integer.parseInt((String) stormConf.get("refreshtime"));
 		
 		this.collector = collector;
 		mc = new MetricsController();
