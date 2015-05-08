@@ -50,6 +50,7 @@ public class FilterBoltGroupTest {
 	
 	@Test
 	public void testGroupMessage() {
+		
 		Tuple tuple = mock(Tuple.class);
 		
 		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"12-10-2015 25:15 22:22 gjslkgjs gklg jsdlkgsdfgsd 12-11-2015 22:22 22:22 fsdofsfjsl\"}";

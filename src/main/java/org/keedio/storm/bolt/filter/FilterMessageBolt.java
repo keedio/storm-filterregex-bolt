@@ -73,6 +73,11 @@ public class FilterMessageBolt extends BaseRichBolt {
 		groupSeparator = (String) stormConf.get("group.separator");
 		allPatterns = getPropKeys(stormConf, "conf");
 		
+		if (stormConf.get("refreshtime") == null)
+			refreshTime = 10;
+		else
+			refreshTime = Integer.parseInt((String) stormConf.get("refreshtime"));
+		
 		this.collector = collector;
 		mc = new MetricsController();
 		
