@@ -3,3 +3,6 @@
 dependency-reduced-pom.xml
 *.iml
 *.idea
+.settings
+.classpath
+.project
