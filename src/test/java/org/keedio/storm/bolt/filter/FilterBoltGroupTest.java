@@ -1,4 +1,4 @@
-package com.keedio.storm;
+package org.keedio.storm.bolt.filter;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -8,9 +8,8 @@ import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.keedio.storm.bolt.filter.FilterMessageBolt;
 import org.mockito.Mock;
-
-import com.keedio.storm.bolt.FilterMessageBolt;
 
 import static org.mockito.Mockito.*;
 import backtype.storm.Config;
@@ -51,6 +50,7 @@ public class FilterBoltGroupTest {
 	
 	@Test
 	public void testGroupMessage() {
+		
 		Tuple tuple = mock(Tuple.class);
 		
 		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"12-10-2015 25:15 22:22 gjslkgjs gklg jsdlkgsdfgsd 12-11-2015 22:22 22:22 fsdofsfjsl\"}";
