@@ -1,4 +1,4 @@
-package com.keedio.storm.bolt.metrics;
+package org.keedio.storm.bolt.filter.metrics;
 
 /**
  * 

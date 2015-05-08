@@ -1,4 +1,4 @@
-package com.keedio.storm;
+package org.keedio.storm.bolt.filter;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -8,9 +8,8 @@ import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.keedio.storm.bolt.filter.FilterMessageBolt;
 import org.mockito.Mock;
-
-import com.keedio.storm.bolt.filter.FilterMessageBolt;
 
 import static org.mockito.Mockito.*;
 import backtype.storm.Config;

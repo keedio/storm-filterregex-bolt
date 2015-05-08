@@ -1,4 +1,4 @@
-package com.keedio.storm.bolt.filter;
+package org.keedio.storm.bolt.filter;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
@@ -24,6 +24,9 @@ import java.util.regex.Pattern;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.keedio.storm.bolt.filter.metrics.MetricsController;
+import org.keedio.storm.bolt.filter.metrics.MetricsEvent;
+import org.keedio.storm.bolt.filter.metrics.SimpleMetric;
 import org.apache.log4j.*;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +35,6 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ganglia.GangliaReporter;
-import com.keedio.storm.bolt.metrics.MetricsController;
-import com.keedio.storm.bolt.metrics.MetricsEvent;
-import com.keedio.storm.bolt.metrics.SimpleMetric;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;

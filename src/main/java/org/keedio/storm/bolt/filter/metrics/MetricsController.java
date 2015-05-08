@@ -1,4 +1,4 @@
-package com.keedio.storm.bolt.metrics;
+package org.keedio.storm.bolt.filter.metrics;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.*;
+import org.keedio.storm.bolt.filter.FilterMessageBolt;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Histogram;
@@ -15,7 +16,6 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.UniformSnapshot;
-import com.keedio.storm.bolt.filter.FilterMessageBolt;
 
 /**
 *This class represents the controller metrics to publish to the source. 
