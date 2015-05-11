@@ -39,7 +39,9 @@ public class FilterBoltGroupTest {
 		conf.put("ganglia.port", "5555"); // Rechazamos las cadenas que 
 		conf.put("refreshtime", "5"); // Rechazamos las cadenas que 
 		conf.put("metrics.reporter.yammer.facade..metric.bucket.seconds", 10);
-		conf.put("conf.pattern1", "(?<date>[0,1,2,3]\\d-[0,1]\\d-\\d\\d\\d\\d)\\s+(?<time>[0,1,2]\\d:\\d\\d)\\s+(?<time2>[0,1,2]\\d:\\d\\d)\\s+");
+		conf.put("conf.pattern1", "(?<date>[4,5]\\d-[0,1]\\d-\\d\\d\\d\\d)\\s+(?<time>[0,1,2]\\d:\\d\\d)\\s+(?<time2>[0,1,2]\\d:\\d\\d)\\s+");
+		conf.put("conf.pattern2", "(?<date>[0,1,2,3]\\d-[0,1]\\d-\\d\\d\\d\\d)\\s+(?<time>[0,1,2]\\d:\\d\\d)\\s+(?<time2>[0,1,2]\\d:\\d\\d)\\s+");
+		conf.put("conf.pattern3", "(?<date>[0,1,2,3]\\d-[0,1]\\d-\\d\\d\\d\\d)\\s+(?<time>[0,1,2]\\d:\\d\\d)\\s+(?<time2>[0,1,2]\\d:\\d\\d)\\s+");
 		conf.put("group.separator", "|");
 		bolt.prepare(conf, topologyContext, collector);
 	}
@@ -49,16 +51,30 @@ public class FilterBoltGroupTest {
 	}
 	
 	@Test
-	public void testGroupMessage() {
+	public void testGroupMessageParseFirst() {
 		
 		Tuple tuple = mock(Tuple.class);
 		
-		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"12-10-2015 25:15 22:22 gjslkgjs gklg jsdlkgsdfgsd 12-11-2015 22:22 22:22 fsdofsfjsl\"}";
+		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"42-10-2015 25:15 22:22 gjslkgjs gklg jsdlkgsdfgsd 12-11-2015 22:22 22:22 fsdofsfjsl\"}";
 		
 	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
 		bolt.execute(tuple);
 		
-		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("pattern1").getCount() == 2);
+		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("pattern1").getCount() == 1);
+	}
+
+	@Test
+	public void testGroupMessageParseSecond() {
+		
+		Tuple tuple = mock(Tuple.class);
+		
+		String ret = "{\"extraData\":\"fsfsdf\",\"message\":\"02-10-2015 25:15 22:22 gjslkgjs gklg jsdlkgsdfgsd 12-11-2015 22:22 22:22 fsdofsfjsl\"}";
+		
+	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
+		bolt.execute(tuple);
+		
+		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("pattern1").getCount() == 0);
+		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("pattern2").getCount() == 1);
 	}
 
 }
