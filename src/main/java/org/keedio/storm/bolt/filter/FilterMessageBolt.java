@@ -1,9 +1,5 @@
-package com.keedio.storm.bolt;
+package org.keedio.storm.bolt.filter;
 
-import info.ganglia.gmetric4j.gmetric.GMetric;
-import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
-
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -15,27 +11,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Vector;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.keedio.storm.bolt.filter.metrics.MetricsController;
+import org.keedio.storm.bolt.filter.metrics.MetricsEvent;
+import org.keedio.storm.bolt.filter.metrics.SimpleMetric;
 import org.apache.log4j.*;
-import org.slf4j.LoggerFactory;
-
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ganglia.GangliaReporter;
-import com.keedio.storm.bolt.metrics.MetricsController;
-import com.keedio.storm.bolt.metrics.MetricsEvent;
-import com.keedio.storm.bolt.metrics.SimpleMetric;
-
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
@@ -56,7 +41,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 	String allowMessages, denyMessages;
     private Date lastExecution = new Date();
     private String groupSeparator;
-    private Map<String, String> allPatterns;
+    private Map<String, Pattern> allPatterns;
     private OutputCollector collector;
     private String gangliaServer;
     private int gangliaPort;
@@ -87,9 +72,11 @@ public class FilterMessageBolt extends BaseRichBolt {
 		//pattern = (String) stormConf.get("pattern");
 		groupSeparator = (String) stormConf.get("group.separator");
 		allPatterns = getPropKeys(stormConf, "conf");
-		gangliaServer = (String) stormConf.get("ganglia.server");
-		gangliaPort = Integer.parseInt((String) stormConf.get("ganglia.port")); 
-		refreshTime = Integer.parseInt((String) stormConf.get("refreshtime"));
+		
+		if (stormConf.get("refreshtime") == null)
+			refreshTime = 10;
+		else
+			refreshTime = Integer.parseInt((String) stormConf.get("refreshtime"));
 		
 		this.collector = collector;
 		mc = new MetricsController();
@@ -116,21 +103,10 @@ public class FilterMessageBolt extends BaseRichBolt {
 		context.registerMetric("rejected", rejected, refreshTime);
 		context.registerMetric("histogram", histogram, refreshTime);
 		
-		// Lanzamos el reporter
-		try {
-			final GMetric ganglia = new GMetric(gangliaServer, gangliaPort, UDPAddressingMode.MULTICAST, 1);
-			final GangliaReporter reporter = GangliaReporter.forRegistry(mc.getMetrics())
-			                                                .convertRatesTo(TimeUnit.SECONDS)
-			                                                .convertDurationsTo(TimeUnit.MILLISECONDS)
-			                                                .build(ganglia);
-			reporter.start(1, TimeUnit.MINUTES);		
-		} catch (IOException e) {
-			LOG.debug("Could not find ganglia server.", e);
-		}
 	}
 
-	private Map<String, String> getPropKeys(Map stormConf, String pattern) {
-		Map<String,String> set = new HashMap<String,String>();
+	private Map<String, Pattern> getPropKeys(Map stormConf, String pattern) {
+		Map<String,Pattern> set = new HashMap<String,Pattern>();
 		Pattern pat = Pattern.compile(pattern + "\\." + "(\\w*)");
 		
 		Iterator<String> it = stormConf.keySet().iterator();
@@ -141,7 +117,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 			
 			if (m.find()) {
 				String value = (String)stormConf.get(key);
-				set.put(m.group(1), value);
+				set.put(m.group(1), Pattern.compile(value));
 			}
 				
 		}
@@ -172,11 +148,11 @@ public class FilterMessageBolt extends BaseRichBolt {
 				try {
 					String nextMessage = filterMessage(message);
 					System.out.println(nextMessage);
-					collector.emit(tuple(nextMessage.getBytes()));
+					collector.emit(tuple(nextMessage));
 					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 				} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
-					LOG.error("error al realizar el filtrado de datos", e);
+					LOG.error("error al realizar el filtrado de datos");
 					collector.reportError(e);
 					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
@@ -196,11 +172,11 @@ public class FilterMessageBolt extends BaseRichBolt {
 				try {
 					String nextMessage = filterMessage(message);
 					System.out.println(nextMessage);
-					collector.emit(tuple(nextMessage.getBytes()));
+					collector.emit(tuple(nextMessage));
 					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 				} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
-					LOG.error("error al realizar el filtrado de datos", e);
+					LOG.error("error al realizar el filtrado de datos");
 					collector.reportError(e);
 					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
@@ -216,11 +192,11 @@ public class FilterMessageBolt extends BaseRichBolt {
 			try {
 				String nextMessage = filterMessage(message);
 				System.out.println(nextMessage);
-				collector.emit(tuple(nextMessage.getBytes()));
+				collector.emit(tuple(nextMessage));
 				collector.ack(input);
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 			} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
-				LOG.error("error al realizar el filtrado de datos", e);
+				LOG.error("error al realizar el filtrado de datos");
 				collector.reportError(e);
 				collector.ack(input);
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
@@ -243,9 +219,13 @@ public class FilterMessageBolt extends BaseRichBolt {
 		while (it.hasNext()) {
 			String key = it.next();
 			
+			LOG.debug("Trying regular expression: " + key);
 			String all = getFilteredMessages(key, originalMessage);
 			
-			buf.append(all).append(groupSeparator);
+			if (all!=null && !all.isEmpty()) {
+				buf.append(all);
+				break;
+			}
 		}
 		
 		obj.put("message", buf.toString());
@@ -257,8 +237,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 		
 		Map<String, Map<String, String>> map = new HashMap<>();
 		
-		String pattern = allPatterns.get(key);
-		Pattern p = Pattern.compile(pattern);
+		Pattern p = allPatterns.get(key);
 		Map groups = getNamedGroups(p);
 		
 		Matcher m = p.matcher(message);
@@ -268,10 +247,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 
 			while (m.find()) {
 				int count = m.groupCount();
-				
-				// Añadimos mensaje a la metrica
-				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, key));
-				
+								
 				for (int i=1;i<=count;i++) {
 					if (!map.containsKey("group" + j)) map.put("group" + j, new HashMap<String, String>());
 					map.get("group" + j).put("item" + i, m.group(i));
@@ -280,15 +256,11 @@ public class FilterMessageBolt extends BaseRichBolt {
 				j++;
 			}
 
-			return JSONObject.toJSONString(map);
 		} else {
 			int i=0;
 			while (m.find()) {
 				Iterator<String> it = groups.keySet().iterator();
 				
-				// Añadimos mensaje a la metrica
-				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, key));
-
 				while (it.hasNext()) {
 					String k = it.next();
 					
@@ -299,9 +271,18 @@ public class FilterMessageBolt extends BaseRichBolt {
 				i++;
 			}
 			
-			return JSONObject.toJSONString(map);
 
 		}		
+
+		// Añadimos mensaje a la metrica si se ha logrado procesar el mensaje
+		if (map.keySet().size()>0) mc.manage(new MetricsEvent(MetricsEvent.INC_METER, key));
+
+		// Se cambia para que solo se envía la primera de las coincidencias. Se quita
+		// generalidad
+		if (map.keySet().size() > 1) LOG.debug("Some items were discarded. Take care.");
+		
+		
+		return (map.get("group0") == null)?null:JSONObject.toJSONString(map.get("group0"));
 				
 	}
 	

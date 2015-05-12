@@ -1,4 +1,4 @@
-package com.keedio.storm;
+package org.keedio.storm.bolt.filter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
