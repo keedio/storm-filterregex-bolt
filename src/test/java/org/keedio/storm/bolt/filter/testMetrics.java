@@ -3,7 +3,10 @@ package org.keedio.storm.bolt.filter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
@@ -99,5 +102,4 @@ public class testMetrics {
 		Assert.assertTrue("Se rechazan", bolt.getMc().getMetrics().meter("rejected").getCount() == 0);
 
 	}
-
 }

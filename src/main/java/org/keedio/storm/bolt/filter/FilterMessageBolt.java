@@ -215,25 +215,24 @@ public class FilterMessageBolt extends BaseRichBolt {
 		String originalMessage = (String) obj.get("message");
 		StringBuffer buf = new StringBuffer();
 		Iterator<String> it = allPatterns.keySet().iterator();
+		Map<String, String> map = null;
 		
 		while (it.hasNext()) {
 			String key = it.next();
 			
 			LOG.debug("Trying regular expression: " + key);
-			String all = getFilteredMessages(key, originalMessage);
+			map = getFilteredMessages(key, originalMessage);
 			
-			if (all!=null && !all.isEmpty()) {
-				buf.append(all);
+			if (map != null)
 				break;
-			}
 		}
 		
-		obj.put("message", buf.toString());
+		obj.put("message", map);
 		
 		return obj.toJSONString();
 	}
 
-	private String getFilteredMessages(String key, String message) throws ParseException, InvocationTargetException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException {
+	private Map<String, String> getFilteredMessages(String key, String message) throws ParseException, InvocationTargetException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException {
 		
 		Map<String, Map<String, String>> map = new HashMap<>();
 		
@@ -281,8 +280,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 		// generalidad
 		if (map.keySet().size() > 1) LOG.debug("Some items were discarded. Take care.");
 		
-		
-		return (map.get("group0") == null)?null:JSONObject.toJSONString(map.get("group0"));
+		return (map.get("group0") == null)?null:map.get("group0");
 				
 	}
 	
