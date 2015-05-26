@@ -140,69 +140,70 @@ public class FilterMessageBolt extends BaseRichBolt {
 		
 		String message = new String(input.getBinary(0));
 		
-		if (!allowMessages.isEmpty()){
-			Pattern patternAllow = Pattern.compile(allowMessages);
-			Matcher matcherAllow = patternAllow.matcher(message);
-			if (matcherAllow.find()) {
-				LOG.debug("Emiting tuple(allowed): " + message.toString());
-				try {
-					String nextMessage = filterMessage(message);
-					System.out.println(nextMessage);
-					collector.emit(tuple(nextMessage));
-					collector.ack(input);
-					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
-				} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
-					LOG.error("error al realizar el filtrado de datos");
-					collector.reportError(e);
-					collector.ack(input);
-					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
+		boolean procesar = false;
+		// Sin no existan blancas o negras se procesa
+		if (allowMessages.isEmpty() && denyMessages.isEmpty()) {
+			procesar = true;
+		} else {
+			// Si esta en la lista blanca se procesa
+			if (!allowMessages.isEmpty()){
+				Pattern patternAllow = Pattern.compile(allowMessages);
+				Matcher matcherAllow = patternAllow.matcher(message);
+				if (matcherAllow.find()) {
+					LOG.debug("Emiting tuple(allowed): " + message.toString());
+					procesar = true;
+				} else {
+					// Existe lista blanca pero no coincide
+					LOG.debug("Emiting tuple(not allowed): " + message.toString());
+					procesar = false;
 				}
-			}else{
-				LOG.debug("NOT Emiting tuple(not allowed): " + message.toString());
-				collector.ack(input);
-				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
-			}
-			
-		}
-		else if (!denyMessages.isEmpty()){
-			Pattern patternDeny = Pattern.compile(denyMessages);
-			Matcher matcherDeny = patternDeny.matcher(message);
-			if (!matcherDeny.find()) {
-				LOG.debug("Emiting tuple(not denied): " + message.toString());
-				try {
-					String nextMessage = filterMessage(message);
-					System.out.println(nextMessage);
-					collector.emit(tuple(nextMessage));
-					collector.ack(input);
-					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
-				} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
-					LOG.error("error al realizar el filtrado de datos");
-					collector.reportError(e);
-					collector.ack(input);
-					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
+			} else {
+				// Si esta en la lista negra no se procesa
+				if (!denyMessages.isEmpty()){
+					Pattern patternDeny = Pattern.compile(denyMessages);
+					Matcher matcherDeny = patternDeny.matcher(message);
+					if (!matcherDeny.find()) {
+						// No esta en la lista negra. Se procesa
+						LOG.debug("Emiting tuple(not denied): " + message.toString());
+						procesar = true;
+					} else {
+						LOG.debug("Emiting tuple (denied): " + message.toString());
+						procesar = false;
+					}
 				}
-			}else {
-				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
-				collector.ack(input);
-				LOG.debug("NOT Emiting tuple(denied): " + message.toString());
 			}
 		}
-		else{
+		
+		
+		if (procesar) {
 			LOG.debug("Emiting tuple(no filter): " + message.toString());
 			try {
-				String nextMessage = filterMessage(message);
-				System.out.println(nextMessage);
-				collector.emit(tuple(nextMessage));
-				collector.ack(input);
-				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
+				if (allPatterns.size() == 0) {
+					// Pasamos el mensaje tal y como llega
+					collector.emit(tuple(message));
+					collector.ack(input);
+					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
+				} else{
+					String nextMessage = filterMessage(message);
+					if (nextMessage == null)
+						collector.emit(tuple(message));
+					else
+						collector.emit(tuple(nextMessage));
+					collector.ack(input);
+					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
+				}
 			} catch (ParseException | InvocationTargetException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
 				LOG.error("error al realizar el filtrado de datos");
 				collector.reportError(e);
 				collector.ack(input);
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 			}
-		}
-
+		} else {
+			LOG.error("No se procesa el mensaje");
+			collector.ack(input);
+			mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
+		}		
+		
 	}
 
 	public String filterMessage(String message) throws ParseException, InvocationTargetException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException {
@@ -226,8 +227,12 @@ public class FilterMessageBolt extends BaseRichBolt {
 			if (map != null)
 				break;
 		}
-		
-		obj.put("message", map);
+		if (map == null) {
+			// No se ha logrado el matching. enviamos el texto de origen
+			return message;
+		} else {
+			obj.put("message", map);
+		}
 		
 		return obj.toJSONString();
 	}
