@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.*;
@@ -16,6 +17,9 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.UniformSnapshot;
+
+import com.codahale.metrics.ganglia.GangliaReporter;
+
 
 /**
  * This class represents the controller metrics to publish to the source.
@@ -48,6 +52,8 @@ public class MetricsController implements Serializable {
         // Iniciamos el reporter de metricas
         JmxReporter reporter = JmxReporter.forRegistry(metrics).inDomain(metricsPath()).build();
         reporter.start();
+        GangliaReporter gangliaReporter = GangliaReporter.forRegistry(metrics).build();
+        gangliaReporter.start(5000L, TimeUnit.MILLISECONDS);
 
     }
 
