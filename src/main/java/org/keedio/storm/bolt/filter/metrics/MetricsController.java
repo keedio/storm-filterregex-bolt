@@ -1,5 +1,6 @@
 package org.keedio.storm.bolt.filter.metrics;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -7,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
 
 import org.apache.log4j.*;
 import org.keedio.storm.bolt.filter.FilterMessageBolt;
@@ -19,6 +21,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.UniformSnapshot;
 
 import com.codahale.metrics.ganglia.GangliaReporter;
+import info.ganglia.gmetric4j.gmetric.GMetric;
+import info.ganglia.gmetric4j.gmetric.GMetric.*;
 
 
 /**
@@ -34,6 +38,7 @@ public class MetricsController implements Serializable {
             Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]*(\\.([a-zA-Z0-9][a-zA-Z0-9-]*))*$");
 
 
+
     // Ojo, problema de serializacion sin el transient
     protected transient MetricRegistry metrics;
     protected transient Map<String, Meter> meters;
@@ -43,7 +48,7 @@ public class MetricsController implements Serializable {
         return metrics;
     }
 
-    public MetricsController() {
+    public MetricsController(String host, int port, UDPAddressingMode mode, int ttl, long miliseconds) {
 
         metrics = new MetricRegistry();
         meters = new HashMap<String, Meter>();
@@ -52,8 +57,15 @@ public class MetricsController implements Serializable {
         // Iniciamos el reporter de metricas
         JmxReporter reporter = JmxReporter.forRegistry(metrics).inDomain(metricsPath()).build();
         reporter.start();
-        GangliaReporter gangliaReporter = GangliaReporter.forRegistry(metrics).build();
-        gangliaReporter.start(5000L, TimeUnit.MILLISECONDS);
+
+        try {
+            GMetric ganglia = new GMetric(host, port, mode, ttl);
+            GangliaReporter gangliaReporter = GangliaReporter.forRegistry(metrics).build(ganglia);
+            gangliaReporter.start(miliseconds, TimeUnit.MILLISECONDS);
+        } catch (IOException e){
+            LOG.error("", e);
+        }
+
 
     }
 
@@ -108,6 +120,5 @@ public class MetricsController implements Serializable {
             return fqhn;
         }
     }
-
 
 }
