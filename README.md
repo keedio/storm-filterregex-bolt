@@ -18,10 +18,10 @@ filter.bolt.deny=
 conf.pattern1=(<date>[^\\s]+)\\s+(<time>[^\\s]+)\\s+
 conf.pattern2=(<date>[^\\s]+)\\s+
 group.separator=|
-ganglia.reporting = no
+ganglia.report = no
 
 # if Ganglia reporting is needed:
-ganglia.reporting = yes
+ganglia.report = yes
 ganglia.host = localhost
 ganglia.port = 5555
 ganglia.ttl = 1
@@ -37,7 +37,7 @@ ganglia.seconds = 60
 |conf.pattern1|false|Regex indicating group of patterns looked for in the message|
 |conf.pattern2|false|Regex indicating group of patterns looked for in the message|
 |group.separator|false|String used to separate the differents patterns|
-|ganglia.reporting|true|String used to evaluate if Ganglia reporting is needed|
+|ganglia.report|true|String used to evaluate if Ganglia reporting is needed|
 |ganglia.host|false|server's name allocating Ganglia|
 |ganglia.port|false|server's port allocating Ganglia|
 |ganglia.ttl|false|time to live|
