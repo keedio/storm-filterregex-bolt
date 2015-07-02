@@ -43,6 +43,7 @@ public class testMetrics {
 		conf.put("conf.pattern1", "(<date>[^\\s]+)\\s+");
 		conf.put("group.separator", "|");
 
+		conf.put("ganglia.report", "yes");
 		conf.put("ganglia.host", "localhost");
 		conf.put("ganglia.port", "5555");
 		conf.put("ganglia.ttl", "1");

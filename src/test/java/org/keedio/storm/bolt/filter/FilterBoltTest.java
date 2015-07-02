@@ -36,6 +36,7 @@ public class FilterBoltTest {
 		conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
 		conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que
 
+		conf.put("ganglia.report", "yes");
 		conf.put("ganglia.host", "localhost");
 		conf.put("ganglia.port", "5555");
 		conf.put("ganglia.ttl", "1");
@@ -75,7 +76,7 @@ public class FilterBoltTest {
 		
 	    when(tuple.getBinary(anyInt())).thenReturn(ret.getBytes());
 		bolt.execute(tuple);
-		
+
 		Assert.assertTrue("Se acepta", bolt.getMc().getMetrics().meter("pattern1").getCount() == 0);
 
 	}

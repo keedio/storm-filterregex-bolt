@@ -93,6 +93,7 @@ public class TopologyTest {
 				conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
 				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que
 
+				conf.put("ganglia.report", "yes");
 				conf.put("ganglia.host", "localhost");
 				conf.put("ganglia.port", "5555");
 				conf.put("ganglia.ttl", "1");
@@ -173,6 +174,7 @@ public class TopologyTest {
 				conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
 				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que
 
+				conf.put("ganglia.report", "yes");
 				conf.put("ganglia.host", "localhost");
 				conf.put("ganglia.port", "5555");
 				conf.put("ganglia.ttl", "1");
@@ -252,6 +254,7 @@ public class TopologyTest {
 				conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
 				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que
 
+				conf.put("ganglia.report", "yes");
 				conf.put("ganglia.host", "localhost");
 				conf.put("ganglia.port", "5555");
 				conf.put("ganglia.ttl", "1");
@@ -333,6 +336,7 @@ public class TopologyTest {
 				conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
 				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que
 
+				conf.put("ganglia.report", "yes");
 				conf.put("ganglia.host", "localhost");
 				conf.put("ganglia.port", "5555");
 				conf.put("ganglia.ttl", "1");
@@ -411,6 +415,7 @@ public class TopologyTest {
 				conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
 				conf.put("filter.bolt.deny", "hola"); // Rechazamos las cadenas que
 
+				conf.put("ganglia.report", "yes");
 				conf.put("ganglia.host", "localhost");
 				conf.put("ganglia.port", "5555");
 				conf.put("ganglia.ttl", "1");

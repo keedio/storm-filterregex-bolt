@@ -48,8 +48,15 @@ public class MetricsController implements Serializable {
         return metrics;
     }
 
+    /**
+     * this builder is used if Ganglia reporting is needed
+     * @param host
+     * @param port
+     * @param mode
+     * @param ttl
+     * @param miliseconds
+     */
     public MetricsController(String host, int port, UDPAddressingMode mode, int ttl, long miliseconds) {
-
         metrics = new MetricRegistry();
         meters = new HashMap<String, Meter>();
         throughput = metrics.histogram("throughput");
@@ -57,7 +64,6 @@ public class MetricsController implements Serializable {
         // Iniciamos el reporter de metricas
         JmxReporter reporter = JmxReporter.forRegistry(metrics).inDomain(metricsPath()).build();
         reporter.start();
-
         try {
             GMetric ganglia = new GMetric(host, port, mode, ttl);
             GangliaReporter gangliaReporter = GangliaReporter.forRegistry(metrics).build(ganglia);
@@ -65,8 +71,14 @@ public class MetricsController implements Serializable {
         } catch (IOException e){
             LOG.error("", e);
         }
+    }
 
-
+    public MetricsController() {
+        metrics = new MetricRegistry();
+        meters = new HashMap<String, Meter>();
+        throughput = metrics.histogram("throughput");
+        JmxReporter reporter = JmxReporter.forRegistry(metrics).inDomain(metricsPath()).build();
+        reporter.start();
     }
 
     /**
