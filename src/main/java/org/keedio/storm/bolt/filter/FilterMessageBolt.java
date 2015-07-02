@@ -51,7 +51,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 	private String hostGanglia, reportGanglia;
 	private GMetric.UDPAddressingMode modeGanglia;
 	private int portGanglia, ttlGanglia;
-	private long milisecondsGanglia;
+	private long secondsGanglia;
 	
     public MetricsController getMc() {
 		return mc;
@@ -86,7 +86,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 
 		//check if in topology's config ganglia.report is set to "yes"
 		if (loadGangliaProperties(stormConf)) {
-			mc = new MetricsController(hostGanglia, portGanglia, modeGanglia, ttlGanglia, milisecondsGanglia);
+			mc = new MetricsController(hostGanglia, portGanglia, modeGanglia, ttlGanglia, secondsGanglia);
 		} else {
 			mc = new MetricsController();
 		}
@@ -368,7 +368,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 			hostGanglia = (String) stormConf.get("ganglia.host");
 			portGanglia = Integer.parseInt((String) stormConf.get("ganglia.port"));
 			ttlGanglia = Integer.parseInt((String) stormConf.get("ganglia.ttl"));
-			milisecondsGanglia = Long.parseLong((String) stormConf.get("ganglia.miliseconds"));
+			secondsGanglia = Long.parseLong((String) stormConf.get("ganglia.seconds"));
 			String stringModeGanglia = (String) stormConf.get("ganglia.UDPAddressingMode");
 			modeGanglia = GMetric.UDPAddressingMode.valueOf(stringModeGanglia);
 			loaded = true;

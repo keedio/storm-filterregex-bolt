@@ -54,9 +54,9 @@ public class MetricsController implements Serializable {
      * @param port
      * @param mode
      * @param ttl
-     * @param miliseconds
+     * @param seconds
      */
-    public MetricsController(String host, int port, UDPAddressingMode mode, int ttl, long miliseconds) {
+    public MetricsController(String host, int port, UDPAddressingMode mode, int ttl, long seconds) {
         metrics = new MetricRegistry();
         meters = new HashMap<String, Meter>();
         throughput = metrics.histogram("throughput");
@@ -66,8 +66,11 @@ public class MetricsController implements Serializable {
         reporter.start();
         try {
             GMetric ganglia = new GMetric(host, port, mode, ttl);
-            GangliaReporter gangliaReporter = GangliaReporter.forRegistry(metrics).build(ganglia);
-            gangliaReporter.start(miliseconds, TimeUnit.MILLISECONDS);
+            GangliaReporter gangliaReporter = GangliaReporter.forRegistry(metrics)
+                    .convertRatesTo(TimeUnit.SECONDS)
+                    .convertDurationsTo(TimeUnit.MILLISECONDS)
+                    .build(ganglia);
+            gangliaReporter.start(seconds, TimeUnit.SECONDS);
         } catch (IOException e){
             LOG.error("", e);
         }
