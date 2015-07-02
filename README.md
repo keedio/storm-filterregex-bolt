@@ -38,11 +38,11 @@ ganglia.seconds = 60
 |conf.pattern2|false|Regex indicating group of patterns looked for in the message|
 |group.separator|false|String used to separate the differents patterns|
 |ganglia.reporting|true|String used to evaluate if Ganglia reporting is needed|
-|ganglia.host|false|server's name allocating Ganglia,ganglia.reporting = yes|
-|ganglia.port|false|server's port allocating Ganglia,ganglia.reporting = yes|
-|ganglia.ttl|false|time to live,ganglia.reporting = yes|
-|ganglia.UDPAddressingMode|false|mode for inet address,ganglia.reporting = yes|
-|ganglia.seconds|false|duration report,ganglia.reporting = yes|
+|ganglia.host|false|server's name allocating Ganglia|
+|ganglia.port|false|server's port allocating Ganglia|
+|ganglia.ttl|false|time to live|
+|ganglia.UDPAddressingMode|false|mode for inet address|
+|ganglia.seconds|false|duration report|
 
 ## Example
 See [test classes](https://github.com/keedio/storm-filterregex-bolt/blob/feature/horizfilter/src/test/java/com/keedio/storm/FilterBoltTest.java) for more information
