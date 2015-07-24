@@ -40,7 +40,7 @@ public class FilterBoltTest {
 		conf.put("ganglia.host", "localhost");
 		conf.put("ganglia.port", "5555");
 		conf.put("ganglia.ttl", "1");
-		conf.put("ganglia.seconds", "5");
+		conf.put("ganglia.minutes", "1");
 		conf.put("ganglia.UDPAddressingMode", "MULTICAST");
 
 		conf.put("refreshtime", "5"); // Rechazamos las cadenas que 

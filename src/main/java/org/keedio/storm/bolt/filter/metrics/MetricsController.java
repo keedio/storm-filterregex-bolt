@@ -50,13 +50,13 @@ public class MetricsController implements Serializable {
 
     /**
      * this builder is used if Ganglia reporting is needed
-     * @param host
-     * @param port
-     * @param mode
-     * @param ttl
-     * @param seconds
+     * @param host ganglia server
+     * @param port ganglia port
+     * @param mode ganglia server mode
+     * @param ttl titme to live
+     * @param minutes ganglia
      */
-    public MetricsController(String host, int port, UDPAddressingMode mode, int ttl, long seconds) {
+    public MetricsController(String host, int port, UDPAddressingMode mode, int ttl, int minutes) {
         metrics = new MetricRegistry();
         meters = new HashMap<String, Meter>();
         throughput = metrics.histogram("throughput");
@@ -70,7 +70,7 @@ public class MetricsController implements Serializable {
                     .convertRatesTo(TimeUnit.SECONDS)
                     .convertDurationsTo(TimeUnit.MILLISECONDS)
                     .build(ganglia);
-            gangliaReporter.start(seconds, TimeUnit.SECONDS);
+            gangliaReporter.start(minutes, TimeUnit.MINUTES);
         } catch (IOException e){
             LOG.error("", e);
         }
