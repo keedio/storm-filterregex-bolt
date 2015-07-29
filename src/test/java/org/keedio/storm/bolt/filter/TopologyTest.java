@@ -91,16 +91,22 @@ public class TopologyTest {
 				Config conf = new Config();
 				conf.setNumWorkers(2);
 				conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
-				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que 
-				conf.put("ganglia.server", "localhost"); // Rechazamos las cadenas que 
-				conf.put("ganglia.port", "5555"); // Rechazamos las cadenas que 
+				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que
+
+				conf.put("ganglia.report", "yes");
+				conf.put("ganglia.host", "localhost");
+				conf.put("ganglia.port", "5555");
+				conf.put("ganglia.ttl", "1");
+				conf.put("ganglia.minutes", "1");
+				conf.put("ganglia.UDPAddressingMode", "UNICAST");
+
 				conf.put("refreshtime", "5"); // Rechazamos las cadenas que 
 				conf.put("metrics.reporter.yammer.facade..metric.bucket.seconds", 10);
 				conf.put("conf.pattern1", "(?<date>[0,1,2,3]\\d-[0,1]\\d-\\d\\d\\d\\d)\\s+(?<time>[0,1,2]\\d:\\d\\d)\\s+");
 				//conf.put("conf.pattern2", "(<date>[^\\s]+)\\s+");
 				conf.put("group.separator", "|");
-				conf.put("gangliaserver", "localhost");
-				conf.put("gangliaport", "1234");
+//				conf.put("gangliaserver", "localhost");
+//				conf.put("gangliaport", "1234");
 				
 				CompleteTopologyParam completeTopologyParam = new CompleteTopologyParam();
 				completeTopologyParam.setMockedSources(mockedSources);
@@ -166,16 +172,22 @@ public class TopologyTest {
 				Config conf = new Config();
 				conf.setNumWorkers(2);
 				conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
-				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que 
-				conf.put("ganglia.server", "localhost"); // Rechazamos las cadenas que 
-				conf.put("ganglia.port", "5555"); // Rechazamos las cadenas que 
+				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que
+
+				conf.put("ganglia.report", "yes");
+				conf.put("ganglia.host", "localhost");
+				conf.put("ganglia.port", "5555");
+				conf.put("ganglia.ttl", "1");
+				conf.put("ganglia.minutes", "1");
+				conf.put("ganglia.UDPAddressingMode", "UNICAST");
+
 				conf.put("refreshtime", "5"); // Rechazamos las cadenas que 
 				conf.put("metrics.reporter.yammer.facade..metric.bucket.seconds", 10);
 				conf.put("conf.pattern1", "(?<date>[0,1,2,3]\\d-[0,1]\\d-\\d\\d)\\s+(?<time>[0,1,2]\\d:\\d\\d)\\s+");
 				//conf.put("conf.pattern2", "(<date>[^\\s]+)\\s+");
 				conf.put("group.separator", "|");
-				conf.put("gangliaserver", "localhost");
-				conf.put("gangliaport", "1234");
+//				conf.put("gangliaserver", "localhost");
+//				conf.put("gangliaport", "1234");
 				
 				CompleteTopologyParam completeTopologyParam = new CompleteTopologyParam();
 				completeTopologyParam.setMockedSources(mockedSources);
@@ -240,16 +252,22 @@ public class TopologyTest {
 				Config conf = new Config();
 				conf.setNumWorkers(2);
 				conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
-				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que 
-				conf.put("ganglia.server", "localhost"); // Rechazamos las cadenas que 
-				conf.put("ganglia.port", "5555"); // Rechazamos las cadenas que 
+				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que
+
+				conf.put("ganglia.report", "yes");
+				conf.put("ganglia.host", "localhost");
+				conf.put("ganglia.port", "5555");
+				conf.put("ganglia.ttl", "1");
+				conf.put("ganglia.minutes", "1");
+				conf.put("ganglia.UDPAddressingMode", "UNICAST");
+
 				conf.put("refreshtime", "5"); // Rechazamos las cadenas que 
 				conf.put("metrics.reporter.yammer.facade..metric.bucket.seconds", 10);
 				conf.put("conf.pattern1", "(?<date>[0,1,2,3]\\d-[0,1]\\d-\\d\\d)\\s+(?<time>[0,1,2]\\d:\\d\\d)\\s+");
 				conf.put("conf.pattern2", "(?<date>[0,1,2,3]\\d-[0,1]\\d-\\d\\d\\d\\d)\\s+(?<time>[0,1,2]\\d:\\d\\d)\\s+");
 				conf.put("group.separator", "|");
-				conf.put("gangliaserver", "localhost");
-				conf.put("gangliaport", "1234");
+//				conf.put("gangliaserver", "localhost");
+//				conf.put("gangliaport", "1234");
 				
 				CompleteTopologyParam completeTopologyParam = new CompleteTopologyParam();
 				completeTopologyParam.setMockedSources(mockedSources);
@@ -316,15 +334,21 @@ public class TopologyTest {
 				Config conf = new Config();
 				conf.setNumWorkers(2);
 				conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
-				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que 
-				conf.put("ganglia.server", "localhost"); // Rechazamos las cadenas que 
-				conf.put("ganglia.port", "5555"); // Rechazamos las cadenas que 
+				conf.put("filter.bolt.deny", ""); // Rechazamos las cadenas que
+
+				conf.put("ganglia.report", "yes");
+				conf.put("ganglia.host", "localhost");
+				conf.put("ganglia.port", "5555");
+				conf.put("ganglia.ttl", "1");
+				conf.put("ganglia.minutes", "1");
+				conf.put("ganglia.UDPAddressingMode", "UNICAST");
+
 				conf.put("refreshtime", "5"); // Rechazamos las cadenas que 
 				conf.put("metrics.reporter.yammer.facade..metric.bucket.seconds", 10);
 				//conf.put("conf.pattern2", "(<date>[^\\s]+)\\s+");
 				conf.put("group.separator", "|");
-				conf.put("gangliaserver", "localhost");
-				conf.put("gangliaport", "1234");
+//				conf.put("gangliaserver", "localhost");
+//				conf.put("gangliaport", "1234");
 				
 				CompleteTopologyParam completeTopologyParam = new CompleteTopologyParam();
 				completeTopologyParam.setMockedSources(mockedSources);
@@ -389,15 +413,21 @@ public class TopologyTest {
 				Config conf = new Config();
 				conf.setNumWorkers(2);
 				conf.put("filter.bolt.allow", ""); // Aceptamos las cadenas con tres digitos seguidos
-				conf.put("filter.bolt.deny", "hola"); // Rechazamos las cadenas que 
-				conf.put("ganglia.server", "localhost"); // Rechazamos las cadenas que 
-				conf.put("ganglia.port", "5555"); // Rechazamos las cadenas que 
+				conf.put("filter.bolt.deny", "hola"); // Rechazamos las cadenas que
+
+				conf.put("ganglia.report", "yes");
+				conf.put("ganglia.host", "localhost");
+				conf.put("ganglia.port", "5555");
+				conf.put("ganglia.ttl", "1");
+				conf.put("ganglia.minutes", "1");
+				conf.put("ganglia.UDPAddressingMode", "UNICAST");
+
 				conf.put("refreshtime", "5"); // Rechazamos las cadenas que 
 				conf.put("metrics.reporter.yammer.facade..metric.bucket.seconds", 10);
 				conf.put("conf.pattern1", "(<date>[^\\s]+)\\s+");
 				conf.put("group.separator", "|");
-				conf.put("gangliaserver", "localhost");
-				conf.put("gangliaport", "1234");
+//				conf.put("gangliaserver", "localhost");
+//				conf.put("gangliaport", "1234");
 				
 				CompleteTopologyParam completeTopologyParam = new CompleteTopologyParam();
 				completeTopologyParam.setMockedSources(mockedSources);

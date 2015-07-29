@@ -18,6 +18,15 @@ filter.bolt.deny=
 conf.pattern1=(<date>[^\\s]+)\\s+(<time>[^\\s]+)\\s+
 conf.pattern2=(<date>[^\\s]+)\\s+
 group.separator=|
+ganglia.report = no
+
+# if Ganglia reporting is needed:
+ganglia.report = yes
+ganglia.host = localhost
+ganglia.port = 5555
+ganglia.ttl = 1
+ganglia.UDPAddressingMode = (UNICAST | MULTICAST)
+ganglia.seconds = 60
 ...
 ```
 
@@ -28,6 +37,12 @@ group.separator=|
 |conf.pattern1|false|Regex indicating group of patterns looked for in the message|
 |conf.pattern2|false|Regex indicating group of patterns looked for in the message|
 |group.separator|false|String used to separate the differents patterns|
+|ganglia.report|true|String used to evaluate if Ganglia reporting is needed|
+|ganglia.host|false|server's name allocating Ganglia|
+|ganglia.port|false|server's port allocating Ganglia|
+|ganglia.ttl|false|time to live|
+|ganglia.UDPAddressingMode|false|mode for inet address|
+|ganglia.seconds|false|duration report|
 
 ## Example
 See [test classes](https://github.com/keedio/storm-filterregex-bolt/blob/feature/horizfilter/src/test/java/com/keedio/storm/FilterBoltTest.java) for more information

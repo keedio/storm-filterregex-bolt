@@ -42,6 +42,13 @@ public class testMetrics {
 		conf.put("metrics.reporter.yammer.facade..metric.bucket.seconds", 10);
 		conf.put("conf.pattern1", "(<date>[^\\s]+)\\s+");
 		conf.put("group.separator", "|");
+
+		conf.put("ganglia.report", "yes");
+		conf.put("ganglia.host", "localhost");
+		conf.put("ganglia.port", "5555");
+		conf.put("ganglia.ttl", "1");
+		conf.put("ganglia.minutes", "1");
+		conf.put("ganglia.UDPAddressingMode", "MULTICAST");
 		bolt.prepare(conf, topologyContext, collector);
 	}
 

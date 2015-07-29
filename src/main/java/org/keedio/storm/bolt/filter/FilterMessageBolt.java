@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import info.ganglia.gmetric4j.gmetric.GMetric;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -43,11 +44,14 @@ public class FilterMessageBolt extends BaseRichBolt {
     private String groupSeparator;
     private Map<String, Pattern> allPatterns;
     private OutputCollector collector;
-    private String gangliaServer;
-    private int gangliaPort;
     private int refreshTime;
 	private MetricsController mc;
- 
+
+	//for Ganglia only
+	private String hostGanglia, reportGanglia;
+	private GMetric.UDPAddressingMode modeGanglia;
+	private int portGanglia, ttlGanglia;
+	private int minutesGanglia;
 	
     public MetricsController getMc() {
 		return mc;
@@ -79,8 +83,14 @@ public class FilterMessageBolt extends BaseRichBolt {
 			refreshTime = Integer.parseInt((String) stormConf.get("refreshtime"));
 		
 		this.collector = collector;
-		mc = new MetricsController();
-		
+
+		//check if in topology's config ganglia.report is set to "yes"
+		if (loadGangliaProperties(stormConf)) {
+			mc = new MetricsController(hostGanglia, portGanglia, modeGanglia, ttlGanglia, minutesGanglia);
+		} else {
+			mc = new MetricsController();
+		}
+
 		//Inicializamos las metricas para los diferentes filtros
 		Iterator<String> keys = allPatterns.keySet().iterator();
 		while (keys.hasNext()) {
@@ -345,6 +355,25 @@ public class FilterMessageBolt extends BaseRichBolt {
 		return Collections.unmodifiableMap(namedGroups);
 	}
 
-	
+
+	/**
+	 * ganglia's server properties are taken from main topology's config
+	 * @param stormConf
+	 * @return
+	 */
+	private boolean loadGangliaProperties(Map stormConf){
+		boolean loaded = false;
+		reportGanglia = (String) stormConf.get("ganglia.report");
+		if (reportGanglia.equals("yes")) {
+			hostGanglia = (String) stormConf.get("ganglia.host");
+			portGanglia = Integer.parseInt((String) stormConf.get("ganglia.port"));
+			ttlGanglia = Integer.parseInt((String) stormConf.get("ganglia.ttl"));
+			minutesGanglia = Integer.parseInt((String) stormConf.get("ganglia.minutes"));
+			String stringModeGanglia = (String) stormConf.get("ganglia.UDPAddressingMode");
+			modeGanglia = GMetric.UDPAddressingMode.valueOf(stringModeGanglia);
+			loaded = true;
+		}
+	   return loaded;
+	}
 
 }

@@ -1,11 +1,14 @@
 package org.keedio.storm.bolt.filter.metrics;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
 
 import org.apache.log4j.*;
 import org.keedio.storm.bolt.filter.FilterMessageBolt;
@@ -16,6 +19,11 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.UniformSnapshot;
+
+import com.codahale.metrics.ganglia.GangliaReporter;
+import info.ganglia.gmetric4j.gmetric.GMetric;
+import info.ganglia.gmetric4j.gmetric.GMetric.*;
+
 
 /**
  * This class represents the controller metrics to publish to the source.
@@ -30,6 +38,7 @@ public class MetricsController implements Serializable {
             Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]*(\\.([a-zA-Z0-9][a-zA-Z0-9-]*))*$");
 
 
+
     // Ojo, problema de serializacion sin el transient
     protected transient MetricRegistry metrics;
     protected transient Map<String, Meter> meters;
@@ -39,8 +48,15 @@ public class MetricsController implements Serializable {
         return metrics;
     }
 
-    public MetricsController() {
-
+    /**
+     * this builder is used if Ganglia reporting is needed
+     * @param host ganglia server
+     * @param port ganglia port
+     * @param mode ganglia server mode
+     * @param ttl titme to live
+     * @param minutes ganglia
+     */
+    public MetricsController(String host, int port, UDPAddressingMode mode, int ttl, int minutes) {
         metrics = new MetricRegistry();
         meters = new HashMap<String, Meter>();
         throughput = metrics.histogram("throughput");
@@ -48,7 +64,24 @@ public class MetricsController implements Serializable {
         // Iniciamos el reporter de metricas
         JmxReporter reporter = JmxReporter.forRegistry(metrics).inDomain(metricsPath()).build();
         reporter.start();
+        try {
+            GMetric ganglia = new GMetric(host, port, mode, ttl);
+            GangliaReporter gangliaReporter = GangliaReporter.forRegistry(metrics)
+                    .convertRatesTo(TimeUnit.SECONDS)
+                    .convertDurationsTo(TimeUnit.MILLISECONDS)
+                    .build(ganglia);
+            gangliaReporter.start(minutes, TimeUnit.MINUTES);
+        } catch (IOException e){
+            LOG.error("", e);
+        }
+    }
 
+    public MetricsController() {
+        metrics = new MetricRegistry();
+        meters = new HashMap<String, Meter>();
+        throughput = metrics.histogram("throughput");
+        JmxReporter reporter = JmxReporter.forRegistry(metrics).inDomain(metricsPath()).build();
+        reporter.start();
     }
 
     /**
@@ -102,6 +135,5 @@ public class MetricsController implements Serializable {
             return fqhn;
         }
     }
-
 
 }
