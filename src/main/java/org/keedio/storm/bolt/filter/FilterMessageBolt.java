@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
+
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -22,6 +23,7 @@ import org.keedio.storm.bolt.filter.metrics.MetricsController;
 import org.keedio.storm.bolt.filter.metrics.MetricsEvent;
 import org.keedio.storm.bolt.filter.metrics.SimpleMetric;
 import org.apache.log4j.*;
+
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
@@ -36,22 +38,21 @@ public class FilterMessageBolt extends BaseRichBolt {
 
 	public static final Logger LOG = Logger
 			.getLogger(FilterMessageBolt.class);
-	private static final Pattern hostnamePattern =
-		    Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]*(\\.([a-zA-Z0-9][a-zA-Z0-9-]*))*$");
 
 	String allowMessages, denyMessages;
     private Date lastExecution = new Date();
-    private String groupSeparator;
     private Map<String, Pattern> allPatterns;
     private OutputCollector collector;
     private int refreshTime;
 	private MetricsController mc;
 
 	//for Ganglia only
+	/*
 	private String hostGanglia, reportGanglia;
 	private GMetric.UDPAddressingMode modeGanglia;
 	private int portGanglia, ttlGanglia;
 	private int minutesGanglia;
+	*/
 	
     public MetricsController getMc() {
 		return mc;
@@ -69,13 +70,17 @@ public class FilterMessageBolt extends BaseRichBolt {
 		return null;
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		allowMessages = (String) stormConf.get("filter.bolt.allow");
 		denyMessages = (String) stormConf.get("filter.bolt.deny");
-		//pattern = (String) stormConf.get("pattern");
-		groupSeparator = (String) stormConf.get("group.separator");
 		allPatterns = getPropKeys(stormConf, "conf");
+
+		if (allowMessages == null)
+			allowMessages = "";
+		if (denyMessages == null)
+			denyMessages = "";
 		
 		if (stormConf.get("refreshtime") == null)
 			refreshTime = 10;
@@ -84,12 +89,8 @@ public class FilterMessageBolt extends BaseRichBolt {
 		
 		this.collector = collector;
 
-		//check if in topology's config ganglia.report is set to "yes"
-		if (loadGangliaProperties(stormConf)) {
-			mc = new MetricsController(hostGanglia, portGanglia, modeGanglia, ttlGanglia, minutesGanglia);
-		} else {
-			mc = new MetricsController();
-		}
+		
+		mc = new MetricsController(stormConf);
 
 		//Inicializamos las metricas para los diferentes filtros
 		Iterator<String> keys = allPatterns.keySet().iterator();
@@ -190,15 +191,15 @@ public class FilterMessageBolt extends BaseRichBolt {
 			try {
 				if (allPatterns.size() == 0) {
 					// Pasamos el mensaje tal y como llega
-					collector.emit(tuple(message));
+					collector.emit(tuple(message.getBytes()));
 					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 				} else{
 					String nextMessage = filterMessage(message);
 					if (nextMessage == null)
-						collector.emit(tuple(message));
+						collector.emit(tuple(message.getBytes()));
 					else
-						collector.emit(tuple(nextMessage));
+						collector.emit(tuple(nextMessage.getBytes()));
 					collector.ack(input);
 					mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "accepted"));
 				}
@@ -304,39 +305,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 		// TODO Auto-generated method stub
 
 	}
-	
-	private String metricsPath() {
-		final String myHostname = extractHostnameFromFQHN(detectHostname());
-		return myHostname;
-	}
 
-	private static String detectHostname() {
-		String hostname = "hostname-could-not-be-detected";
-		try {
-			hostname = InetAddress.getLocalHost().getHostName();
-		}
-		catch (UnknownHostException e) {
-			LOG.error("Could not determine hostname");
-		}
-		return hostname;
-	}
-
-	private static String extractHostnameFromFQHN(String fqhn) {
-		if (hostnamePattern.matcher(fqhn).matches()) {
-			if (fqhn.contains(".")) {
-				return fqhn.split("\\.")[0];
-			}
-			else {
-				return fqhn;
-			}
-		}
-		else {
-			// We want to return the input as-is
-			// when it is not a valid hostname/FQHN.
-			return fqhn;
-		}
-	}
-	
 	private static Map<String, Integer> getNamedGroups(Pattern regex)
 			throws NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException,
@@ -353,27 +322,6 @@ public class FilterMessageBolt extends BaseRichBolt {
 		}
 
 		return Collections.unmodifiableMap(namedGroups);
-	}
-
-
-	/**
-	 * ganglia's server properties are taken from main topology's config
-	 * @param stormConf
-	 * @return
-	 */
-	private boolean loadGangliaProperties(Map stormConf){
-		boolean loaded = false;
-		reportGanglia = (String) stormConf.get("ganglia.report");
-		if (reportGanglia.equals("yes")) {
-			hostGanglia = (String) stormConf.get("ganglia.host");
-			portGanglia = Integer.parseInt((String) stormConf.get("ganglia.port"));
-			ttlGanglia = Integer.parseInt((String) stormConf.get("ganglia.ttl"));
-			minutesGanglia = Integer.parseInt((String) stormConf.get("ganglia.minutes"));
-			String stringModeGanglia = (String) stormConf.get("ganglia.UDPAddressingMode");
-			modeGanglia = GMetric.UDPAddressingMode.valueOf(stringModeGanglia);
-			loaded = true;
-		}
-	   return loaded;
 	}
 
 }
