@@ -25,7 +25,9 @@ import backtype.storm.testing.CompleteTopologyParam;
 import backtype.storm.testing.MkClusterParam;
 import backtype.storm.testing.MockedSources;
 import backtype.storm.testing.TestJob;
+import backtype.storm.testing.TupleCaptureBolt;
 import backtype.storm.topology.TopologyBuilder;
+import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
 public class TopologyTest {
@@ -117,13 +119,15 @@ public class TopologyTest {
 				Map result = Testing.completeTopology(cluster, topology,
 						completeTopologyParam);
 
-				List tupleValues = (ArrayList)Testing.readTuples(result, "3").get(0);
+				String tuple = Testing.readTuples(result, "3").get(0).toString();
+				
+				System.err.println(tuple);
 
 				// El mensaje recibido es del tipo {"extraData":"...", "message":"..."}
 				JSONParser parser = new JSONParser();
 				JSONObject obj = null;
 				try {
-					obj = (JSONObject) parser.parse((String)tupleValues.get(0));
+					obj = (JSONObject) parser.parse(tuple);
 				} catch (ParseException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

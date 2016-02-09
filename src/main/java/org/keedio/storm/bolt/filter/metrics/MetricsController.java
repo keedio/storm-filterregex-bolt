@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-
 import org.apache.log4j.*;
 import org.keedio.storm.bolt.filter.FilterMessageBolt;
 import org.slf4j.LoggerFactory;
@@ -19,8 +18,8 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.UniformSnapshot;
-
 import com.codahale.metrics.ganglia.GangliaReporter;
+
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetric.*;
 
@@ -37,7 +36,12 @@ public class MetricsController implements Serializable {
     private static final Pattern hostnamePattern =
             Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]*(\\.([a-zA-Z0-9][a-zA-Z0-9-]*))*$");
 
-
+    private static final String GANGLIA_REPORT = "ganglia.report";
+    private static final String GANGLIA_HOST = "ganglia.host";
+    private static final String GANGLIA_PORT = "ganglia.port";
+    private static final String GANGLIA_TTL = "ganglia.ttl";
+    private static final String GANGLIA_PULL_SECONDS = "ganglia.pull.seconds";
+    private static final String GANGLIA_MODE = "ganglia.UDPAddressingMode";    
 
     // Ojo, problema de serializacion sin el transient
     protected transient MetricRegistry metrics;
@@ -48,40 +52,45 @@ public class MetricsController implements Serializable {
         return metrics;
     }
 
-    /**
-     * this builder is used if Ganglia reporting is needed
-     * @param host ganglia server
-     * @param port ganglia port
-     * @param mode ganglia server mode
-     * @param ttl titme to live
-     * @param minutes ganglia
-     */
-    public MetricsController(String host, int port, UDPAddressingMode mode, int ttl, int minutes) {
-        metrics = new MetricRegistry();
+    public MetricsController(Map configuration) {
+        
+    	metrics = new MetricRegistry();
         meters = new HashMap<String, Meter>();
         throughput = metrics.histogram("throughput");
-
-        // Iniciamos el reporter de metricas
         JmxReporter reporter = JmxReporter.forRegistry(metrics).inDomain(metricsPath()).build();
         reporter.start();
-        try {
-            GMetric ganglia = new GMetric(host, port, mode, ttl);
-            GangliaReporter gangliaReporter = GangliaReporter.forRegistry(metrics)
-                    .convertRatesTo(TimeUnit.SECONDS)
-                    .convertDurationsTo(TimeUnit.MILLISECONDS)
-                    .build(ganglia);
-            gangliaReporter.start(minutes, TimeUnit.MINUTES);
-        } catch (IOException e){
-            LOG.error("", e);
+        
+        if (configuration.containsKey(GANGLIA_REPORT) && configuration.get(GANGLIA_REPORT).equals("true")){
+        	LOG.info("Ganglia reporting ENABLED by configuration");
+        	startGangliaReporter(configuration);
         }
     }
+    
+    private void startGangliaReporter(Map configuration){
+		
+		String host = (String) configuration.get(GANGLIA_HOST);
+		int port = Integer.valueOf((String)configuration.get(GANGLIA_PORT));
+		int ttl = Integer.valueOf((String) configuration.get(GANGLIA_TTL));
+		long pullSeconds = Long.valueOf((String)configuration.get(GANGLIA_PULL_SECONDS));
+		
+		UDPAddressingMode mode;
+		String UDPmode = (String) configuration.get(GANGLIA_MODE);
 
-    public MetricsController() {
-        metrics = new MetricRegistry();
-        meters = new HashMap<String, Meter>();
-        throughput = metrics.histogram("throughput");
-        JmxReporter reporter = JmxReporter.forRegistry(metrics).inDomain(metricsPath()).build();
-        reporter.start();
+		if (UDPmode == null || UDPmode.equalsIgnoreCase("unicast"))
+			mode = UDPAddressingMode.UNICAST;
+		else
+			mode = UDPAddressingMode.MULTICAST;
+		
+		try {
+	    	GMetric ganglia = new GMetric(host, port, mode, ttl);
+	        GangliaReporter gangliaReporter = GangliaReporter.forRegistry(metrics)
+	                .convertRatesTo(TimeUnit.SECONDS)
+	                .convertDurationsTo(TimeUnit.MILLISECONDS)
+	                .build(ganglia);
+	        gangliaReporter.start(pullSeconds, TimeUnit.SECONDS);
+		}catch (IOException e){
+	        LOG.error("", e);
+	    }
     }
 
     /**

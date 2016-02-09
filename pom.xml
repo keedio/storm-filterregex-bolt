@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.keedio.storm.bolt.filter</groupId>
     <artifactId>storm-filterregex-bolt</artifactId>
-    <version>1.0.7-SNAPSHOT</version>
+    <version>1.0.7</version>
     <packaging>jar</packaging>
     <name>storm filterregex bolt</name>
     <description>
@@ -46,13 +46,13 @@
         <dependency>
             <groupId>org.apache.storm</groupId>
             <artifactId>storm-core</artifactId>
-            <version>0.9.2-incubating</version>
+            <version>0.9.4</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.storm</groupId>
             <artifactId>storm-kafka</artifactId>
-            <version>0.9.2-incubating</version>
+            <version>0.9.4</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -84,7 +84,37 @@
         </dependency>
     </dependencies>
     <build>
-        <plugins>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>2.19</version>
+              <configuration>
+                <environmentVariables>
+                  <STORM_TEST_TIMEOUT_MS>60000</STORM_TEST_TIMEOUT_MS>
+                </environmentVariables>
+              </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-enforcer-plugin</artifactId>
+              <version>1.4.1</version>
+              <executions>
+                <execution>
+                  <id>enforce-versions</id>
+                  <goals>
+                    <goal>enforce</goal>
+                  </goals>
+                  <configuration>
+                    <rules>
+                      <requireJavaVersion>
+                        <version>1.5</version>
+                      </requireJavaVersion>
+                    </rules>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -108,7 +138,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
