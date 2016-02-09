@@ -210,7 +210,7 @@ public class FilterMessageBolt extends BaseRichBolt {
 				mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 			}
 		} else {
-			LOG.error("No se procesa el mensaje");
+			LOG.debug("No se procesa el mensaje");
 			collector.ack(input);
 			mc.manage(new MetricsEvent(MetricsEvent.INC_METER, "rejected"));
 		}		
