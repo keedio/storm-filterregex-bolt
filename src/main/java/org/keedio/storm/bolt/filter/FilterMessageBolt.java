@@ -1,8 +1,6 @@
 package org.keedio.storm.bolt.filter;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -15,7 +13,11 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
-import org.codehaus.jackson.map.ObjectMapper;
+//import org.codehaus.jackson.map.ObjectMapper;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 
 public class FilterMessageBolt extends BaseRichBolt {
 
@@ -66,7 +68,6 @@ public class FilterMessageBolt extends BaseRichBolt {
 		this.collector = collector;		
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void execute(Tuple input) {
 		
@@ -75,11 +76,18 @@ public class FilterMessageBolt extends BaseRichBolt {
 		String message = new String(input.getBinary(0));
 		
 		if(isEnriched){
-			try {
-				HashMap<String,Object> inputJson = new ObjectMapper().readValue(message, HashMap.class);		    	    
-				message = (String) inputJson.get("message");				
-			}catch (IOException e){
-				LOG.warn("Message (" + message + ") not in Keedio Enriched format",e);
+			try{
+				//Map<String,String> inputJson = gson.fromJson(message,Map.class); 	    
+				//message = inputJson.get("message");
+				Gson gson = new GsonBuilder().create();
+				message = (String) gson.fromJson(message,Map.class).get("message");
+				if (message == null){
+					LOG.warn("Message (" + message + ") not in Keedio Enriched format");
+					collector.emit("fail",input.getValues());
+					collector.ack(input);
+				}
+			}catch (JsonSyntaxException e){
+				LOG.warn("Not valid Json. Message (" + message + ") not in Keedio Enriched format",e);
 				collector.emit("fail",input.getValues());
 				collector.ack(input);
 			}
